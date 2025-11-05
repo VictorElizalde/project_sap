@@ -1,0 +1,58 @@
+-- Genera CREATE TABLE (columnas + PK) por tabla para un esquema dado
+DO BEGIN
+  DECLARE SCHEMA_NAME NVARCHAR(256) := 'SBODEMOUS'; -- <- cambia aquí al esquema que necesites
+
+  -- Subconsulta que construye la definición de cada columna
+  CREATE LOCAL TEMPORARY TABLE #COLS AS
+  SELECT 
+    SCHEMA_NAME,
+    TABLE_NAME,
+    POSITION,
+    '"' || COLUMN_NAME || '" ' ||
+      DATA_TYPE_NAME ||
+      CASE 
+        WHEN LENGTH IS NOT NULL AND SCALE IS NOT NULL THEN '(' || TO_NVARCHAR(LENGTH) || ',' || TO_NVARCHAR(SCALE) || ')'
+        WHEN LENGTH IS NOT NULL THEN '(' || TO_NVARCHAR(LENGTH) || ')'
+        ELSE ''
+      END ||
+      CASE WHEN IS_NULLABLE = 'FALSE' THEN ' NOT NULL' ELSE '' END ||
+      COALESCE(' DEFAULT ' || DEFAULT_VALUE, '') AS COL_DEF
+  FROM SYS.COLUMNS
+  WHERE SCHEMA_NAME = :SCHEMA_NAME
+  ORDER BY TABLE_NAME, POSITION;
+
+  -- PK defs
+  CREATE LOCAL TEMPORARY TABLE #PK AS
+  SELECT
+    k.SCHEMA_NAME,
+    k.TABLE_NAME,
+    'PRIMARY KEY (' || LISTAGG('"'||k.COLUMN_NAME||'"', ',') WITHIN GROUP (ORDER BY k.POSITION) || ')' AS PK_DEF
+  FROM SYS.CONSTRAINT_COLUMNS k
+  JOIN SYS.TABLE_CONSTRAINTS tc
+    ON k.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+   AND k.SCHEMA_NAME = tc.SCHEMA_NAME
+   AND k.TABLE_NAME = tc.TABLE_NAME
+  WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
+    AND k.SCHEMA_NAME = :SCHEMA_NAME
+  GROUP BY k.SCHEMA_NAME, k.TABLE_NAME;
+
+  -- Agregamos por tabla la lista de columnas y el PK si existe
+  SELECT 
+    'CREATE COLUMN TABLE "' || t.SCHEMA_NAME || '"."' || t.TABLE_NAME || '" (' || 
+      t.COLS ||
+      COALESCE(', ' || p.PK_DEF, '') ||
+    ');' AS DDL
+  FROM (
+    SELECT SCHEMA_NAME, TABLE_NAME,
+           LISTAGG(COL_DEF, ',\n  ') WITHIN GROUP (ORDER BY POSITION) AS COLS
+    FROM #COLS
+    GROUP BY SCHEMA_NAME, TABLE_NAME
+  ) t
+  LEFT JOIN #PK p
+    ON t.SCHEMA_NAME = p.SCHEMA_NAME
+   AND t.TABLE_NAME = p.TABLE_NAME
+  ORDER BY t.TABLE_NAME;
+
+  DROP TABLE #COLS;
+  DROP TABLE #PK;
+END;
