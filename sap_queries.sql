@@ -57,18 +57,10 @@ ORDER BY D.DocNum;
 ---------------------------------------------------------------------------------------------
 -- 3. DEUDA CLIENTES (facturas abiertas)
 ---------------------------------------------------------------------------------------------
-SELECT 
-    C.CardCode,
-    C.CardName,
-    F.DocNum,
-    F.DocDate,
-    F.DocDueDate,
-    F.DocTotal - F.PaidToDate AS SaldoPendiente
-FROM OINV F
-JOIN OCRD C ON F.CardCode = C.CardCode
-WHERE F.DocTotal > F.PaidToDate
-  AND F.DocDate <= @FechaConsulta
-ORDER BY C.CardName;
+SELECT
+    "DocEntry", "DocNum", "DocDate", "DocDueDate", "DocTotal", "PaidToDate", "CardCode"
+FROM "OPCH"
+ORDER BY "DocDate" DESC;
 
 
 ---------------------------------------------------------------------------------------------
@@ -124,88 +116,101 @@ GROUP BY MONTH(V.DocDate), YEAR(V.DocDate);
 ---------------------------------------------------------------------------------------------
 -- 7. COMPRAS POR FAMILIA / ARTÍCULO (por proveedor)
 ---------------------------------------------------------------------------------------------
-SELECT 
-    P.CardCode,
-    P.CardName,
-    I.ItmsGrpNam AS Familia,
-    L.ItemCode,
-    L.Dscription,
-    SUM(L.Quantity) AS Cantidad,
-    SUM(L.LineTotal) AS Total
-FROM OPCH C
-JOIN PCH1 L ON C.DocEntry = L.DocEntry
-JOIN OCRD P ON C.CardCode = P.CardCode
-JOIN OITM I ON L.ItemCode = I.ItemCode
-WHERE C.CardCode = @Proveedor
-  AND C.DocDate BETWEEN @FechaInicio AND @FechaFin
-GROUP BY P.CardCode, P.CardName, I.ItmsGrpNam, L.ItemCode, L.Dscription
-ORDER BY I.ItmsGrpNam, L.ItemCode;
-
+SELECT
+    P."CardCode"   AS "CardCode",
+    P."CardName"   AS "CardName",
+    G."ItmsGrpNam" AS "Familia",
+    L."ItemCode"   AS "ItemCode",
+    L."Dscription" AS "Dscription",
+    SUM(L."Quantity")  AS "Cantidad",
+    SUM(L."LineTotal") AS "Total"
+FROM "OPCH" H
+         JOIN "PCH1" L ON H."DocEntry" = L."DocEntry"
+         JOIN "OCRD" P ON H."CardCode" = P."CardCode"
+         LEFT JOIN "OITM" I ON L."ItemCode" = I."ItemCode"
+         LEFT JOIN "OITB" G ON I."ItmsGrpCod" = G."ItmsGrpCod"
+WHERE H."CardCode" = 'P0001'
+  AND H."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+GROUP BY P."CardCode", P."CardName", G."ItmsGrpNam", L."ItemCode", L."Dscription"
+ORDER BY G."ItmsGrpNam", L."ItemCode";
 
 ---------------------------------------------------------------------------------------------
 -- 8. ESTADÍSTICAS VENTAS (con dirección de entrega)
 ---------------------------------------------------------------------------------------------
-SELECT 
-    V.DocNum,
-    V.DocDate,
-    C.CardName,
-    V.Address2 AS DireccionEntrega,
-    L.ItemCode,
-    L.Dscription,
-    L.Quantity,
-    L.LineTotal,
-    (L.LineTotal - L.TotalSumSy) AS Margen
-FROM OINV V
-JOIN INV1 L ON V.DocEntry = L.DocEntry
-JOIN OCRD C ON V.CardCode = C.CardCode
-WHERE V.DocDate BETWEEN @FechaInicio AND @FechaFin
-ORDER BY V.DocDate, V.DocNum;
+SELECT
+    V."DocNum"          AS "DocNum",
+    V."DocDate"         AS "DocDate",
+    C."CardName"        AS "CardName",
+    V."Address2"        AS "DireccionEntrega",
+    L."ItemCode"        AS "ItemCode",
+    L."Dscription"      AS "Dscription",
+    L."Quantity"        AS "Quantity",
+    L."LineTotal"       AS "LineTotal",
+    (L."LineTotal" - COALESCE(L."TotalSumSy", 0)) AS "Margen"
+FROM "OINV" V
+         JOIN "INV1" L ON V."DocEntry" = L."DocEntry"
+         JOIN "OCRD" C ON V."CardCode" = C."CardCode"
+WHERE V."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+ORDER BY V."DocDate", V."DocNum";
 
 
 ---------------------------------------------------------------------------------------------
 -- 9. EXCEL LOGÍSTICA (Vivace)
 ---------------------------------------------------------------------------------------------
-SELECT 
-    D.DocNum,
-    D.DocDate,
-    D.CardCode,
-    D.CardName,
-    L.ItemCode,
-    L.Dscription,
-    L.Quantity,
-    L.WhsCode,
-    D.Address2 AS DireccionEntrega
-FROM ODLN D
-JOIN DLN1 L ON D.DocEntry = L.DocEntry
-WHERE D.DocNum = @Albaran
-ORDER BY L.LineNum;
+SELECT
+    D."DocNum"        AS "DocNum",
+    D."DocDate"       AS "DocDate",
+    D."CardCode"      AS "CardCode",
+    D."CardName"      AS "CardName",
+    L."ItemCode"      AS "ItemCode",
+    L."Dscription"    AS "Dscription",
+    L."Quantity"      AS "Quantity",
+    L."WhsCode"       AS "WhsCode",
+    D."Address2"      AS "DireccionEntrega"
+FROM "ODLN" D
+         JOIN "DLN1" L ON D."DocEntry" = L."DocEntry"
+WHERE D."DocNum" = 12345
+ORDER BY L."LineNum";
 
 
 ---------------------------------------------------------------------------------------------
 -- 10. CUENTAS CON MOVIMIENTOS POR MES
 ---------------------------------------------------------------------------------------------
-SELECT 
-    A.AcctCode,
-    A.AcctName,
-    SUM(J.Debit - J.Credit) AS MovimientoMes
-FROM OJDT T
-JOIN JDT1 J ON T.TransId = J.TransId
-JOIN OACT A ON J.Account = A.AcctCode
-WHERE MONTH(T.RefDate) = @Mes AND YEAR(T.RefDate) = @Año
-GROUP BY A.AcctCode, A.AcctName
-ORDER BY A.AcctCode;
+-- Parámetros: usar DATE 'YYYY-MM-DD'
+-- ejemplo para octubre 2025:
+-- fecha_inicio = DATE '2025-10-01'
+-- fecha_fin_excl = DATE '2025-11-01'
+
+SELECT
+    A."AcctCode"   AS "AcctCode",
+    A."AcctName"   AS "AcctName",
+    SUM(J."Debit" - J."Credit") AS "MovimientoMes"
+FROM "OJDT" T
+         JOIN "JDT1" J ON T."TransId" = J."TransId"
+         JOIN "OACT" A ON J."Account" = A."AcctCode"
+WHERE T."RefDate" >= DATE '2025-10-01'   -- inclusive
+  AND T."RefDate" <  DATE '2025-11-01'   -- exclusive: primer dia mes siguiente
+GROUP BY A."AcctCode", A."AcctName"
+ORDER BY A."AcctCode";
 
 
 ---------------------------------------------------------------------------------------------
 -- 11. PyG (Pérdidas y Ganancias)
 ---------------------------------------------------------------------------------------------
-SELECT 
-    A.FinanseAct,
-    SUM(J.Debit - J.Credit) AS Monto
-FROM JDT1 J
-JOIN OACT A ON J.Account = A.AcctCode
-WHERE YEAR(J.RefDate) = @Año
-GROUP BY A.FinanseAct;
+-- Parámetros: usar DATE 'YYYY-MM-DD'
+-- ejemplo para octubre 2025:
+-- fecha_inicio = DATE '2025-10-01'
+-- fecha_fin_excl = DATE '2025-11-01'
+
+SELECT
+    A."AcctCode"   AS "AcctCode",
+    A."AcctName"   AS "AcctName",
+    SUM(J."Debit" - J."Credit") AS "MovimientoMes"
+FROM "OJDT" T
+         JOIN "JDT1" J ON T."TransId" = J."TransId"
+         JOIN "OACT" A ON J."Account" = A."AcctCode"
+GROUP BY A."AcctCode", A."AcctName"
+ORDER BY A."AcctCode";
 
 
 ---------------------------------------------------------------------------------------------
