@@ -216,47 +216,54 @@ ORDER BY A."AcctCode";
 ---------------------------------------------------------------------------------------------
 -- 12. BALANCE
 ---------------------------------------------------------------------------------------------
-SELECT 
-    A.AcctCode,
-    A.AcctName,
-    SUM(J.Debit - J.Credit) AS Saldo
-FROM JDT1 J
-JOIN OACT A ON J.Account = A.AcctCode
-WHERE YEAR(J.RefDate) = @Año
-GROUP BY A.AcctCode, A.AcctName
-ORDER BY A.AcctCode;
+-- Balance por año (ej: 2025)
+SELECT
+    A."AcctCode"   AS "AcctCode",
+    A."AcctName"   AS "AcctName",
+    SUM(J."Debit" - J."Credit") AS "Saldo"
+FROM "JDT1" J
+         JOIN "OACT" A ON J."Account" = A."AcctCode"
+WHERE J."RefDate" >= DATE '2025-01-01'
+  AND J."RefDate" <  DATE '2026-01-01'
+GROUP BY A."AcctCode", A."AcctName"
+ORDER BY A."AcctCode";
 
 
 ---------------------------------------------------------------------------------------------
 -- 13. SUMAS Y SALDOS
 ---------------------------------------------------------------------------------------------
-SELECT 
-    A.AcctCode,
-    A.AcctName,
-    SUM(J.Debit) AS TotalDebe,
-    SUM(J.Credit) AS TotalHaber,
-    SUM(J.Debit - J.Credit) AS Saldo
-FROM JDT1 J
-JOIN OACT A ON J.Account = A.AcctCode
-WHERE YEAR(J.RefDate) = @Año
-GROUP BY A.AcctCode, A.AcctName
-ORDER BY A.AcctCode;
-
+-- Sumas y Saldos por año (ejemplo 2025)
+SELECT
+    A."AcctCode"   AS "AcctCode",
+    A."AcctName"   AS "AcctName",
+    SUM(J."Debit")  AS "TotalDebe",
+    SUM(J."Credit") AS "TotalHaber",
+    SUM(J."Debit" - J."Credit") AS "Saldo"
+FROM "JDT1" J
+         JOIN "OACT" A ON J."Account" = A."AcctCode"
+WHERE J."RefDate" >= DATE '2025-01-01'
+  AND J."RefDate" <  DATE '2026-01-01'
+GROUP BY A."AcctCode", A."AcctName"
+ORDER BY A."AcctCode";
 
 ---------------------------------------------------------------------------------------------
 -- 14. ARTÍCULOS CON CANON DIGITAL
 ---------------------------------------------------------------------------------------------
-SELECT 
-    I.ItemCode,
-    I.ItemName,
-    SUM(L.Quantity) AS Cantidad,
-    SUM(L.LineTotal) AS Total
-FROM OINV V
-JOIN INV1 L ON V.DocEntry = L.DocEntry
-JOIN OITM I ON L.ItemCode = I.ItemCode
-WHERE I.U_CanonDigital = 'Y'
-  AND V.DocDate BETWEEN @FechaInicio AND @FechaFin
-GROUP BY I.ItemCode, I.ItemName;
+-- Parámetros (si prefieres sustituirlos manualmente, cambia las fechas aquí)
+-- FechaInicio = '2025-10-01', FechaFin = '2025-10-31'
+
+SELECT
+    I."ItemCode"    AS ItemCode,
+    I."ItemName"    AS ItemName,
+    SUM(L."Quantity")   AS Cantidad,
+    SUM(L."LineTotal")  AS Total
+FROM "OINV" V
+         JOIN "INV1" L   ON V."DocEntry" = L."DocEntry"
+         JOIN "OITM" I   ON L."ItemCode" = I."ItemCode"
+WHERE I."U_GEI_Canon" = 'Y'   -- <- campo correcto según metadata
+  AND V."DocDate" BETWEEN DATE '2025-01-01' AND DATE '2026-10-31'
+GROUP BY I."ItemCode", I."ItemName"
+ORDER BY I."ItemCode";
 
 
 ---------------------------------------------------------------------------------------------
@@ -264,64 +271,50 @@ GROUP BY I.ItemCode, I.ItemName;
 ---------------------------------------------------------------------------------------------
 
 -- IVA REPERCUTIDO (ventas)
-SELECT 
-    V.DocNum,
-    V.DocDate,
-    C.CardName,
-    T.Rate AS IVA,
-    L.LineTotal AS BaseImponible,
-    (L.LineTotal * T.Rate / 100) AS IVAImporte
-FROM OINV V
-JOIN INV1 L ON V.DocEntry = L.DocEntry
-JOIN OCRD C ON V.CardCode = C.CardCode
-JOIN OVTG T ON L.VatGroup = T.Code
-WHERE V.DocDate BETWEEN @FechaInicio AND @FechaFin;
+-- Ejemplo HANA: IVA repercutido (ventas) por línea
+-- Sustituye las fechas por tus valores
+SELECT
+    V."DocNum"        AS DocNum,
+    V."DocDate"       AS DocDate,
+    C."CardName"      AS CardName,
+    T."Rate"          AS IVA,
+    L."LineTotal"     AS BaseImponible,
+    (L."LineTotal" * T."Rate" / 100) AS IVAImporte
+FROM "OINV" V
+         JOIN "INV1" L ON V."DocEntry" = L."DocEntry"
+         LEFT JOIN "OCRD" C ON V."CardCode" = C."CardCode"
+         LEFT JOIN "OVTG" T ON L."VatGroup" = T."Code"
+WHERE V."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+ORDER BY V."DocDate", V."DocNum", L."LineNum";
 
--- IVA SOPORTADO (compras)
-SELECT 
-    C.DocNum,
-    C.DocDate,
-    P.CardName,
-    T.Rate AS IVA,
-    L.LineTotal AS BaseImponible,
-    (L.LineTotal * T.Rate / 100) AS IVAImporte
-FROM OPCH C
-JOIN PCH1 L ON C.DocEntry = L.DocEntry
-JOIN OCRD P ON C.CardCode = P.CardCode
-JOIN OVTG T ON L.VatGroup = T.Code
-WHERE C.DocDate BETWEEN @FechaInicio AND @FechaFin;
 
 
 ---------------------------------------------------------------------------------------------
 -- 16. LIBRO DE IGIC SOPORTADO Y REPERCUTIDO
 ---------------------------------------------------------------------------------------------
+-- IGIC repercutido - agrupado por tasa
+SELECT
+    T."Rate"   AS IGIC,
+    SUM(L."LineTotal") AS BaseTotal,
+    SUM(L."LineTotal" * T."Rate" / 100) AS IVA_Total
+FROM "OINV" V
+         JOIN "INV1" L ON V."DocEntry" = L."DocEntry"
+         LEFT JOIN "OVTG" T ON L."VatGroup" = T."Code"
+WHERE T."Name" LIKE '%IGIC%'
+  AND V."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+GROUP BY T."Rate"
+ORDER BY T."Rate";
 
--- IGIC REPERCUTIDO (ventas)
-SELECT 
-    V.DocNum,
-    V.DocDate,
-    C.CardName,
-    T.Rate AS IGIC,
-    L.LineTotal AS BaseImponible,
-    (L.LineTotal * T.Rate / 100) AS IGICImporte
-FROM OINV V
-JOIN INV1 L ON V.DocEntry = L.DocEntry
-JOIN OCRD C ON V.CardCode = C.CardCode
-JOIN OVTG T ON L.VatGroup = T.Code
-WHERE T.Name LIKE '%IGIC%' 
-  AND V.DocDate BETWEEN @FechaInicio AND @FechaFin;
+-- IGIC soportado - agrupado por tasa
+SELECT
+    T."Rate"   AS IGIC,
+    SUM(L."LineTotal") AS BaseTotal,
+    SUM(L."LineTotal" * T."Rate" / 100) AS IVA_Total
+FROM "OPCH" C
+         JOIN "PCH1" L ON C."DocEntry" = L."DocEntry"
+         LEFT JOIN "OVTG" T ON L."VatGroup" = T."Code"
+WHERE T."Name" LIKE '%IGIC%'
+  AND C."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+GROUP BY T."Rate"
+ORDER BY T."Rate";
 
--- IGIC SOPORTADO (compras)
-SELECT 
-    C.DocNum,
-    C.DocDate,
-    P.CardName,
-    T.Rate AS IGIC,
-    L.LineTotal AS BaseImponible,
-    (L.LineTotal * T.Rate / 100) AS IGICImporte
-FROM OPCH C
-JOIN PCH1 L ON C.DocEntry = L.DocEntry
-JOIN OCRD P ON C.CardCode = P.CardCode
-JOIN OVTG T ON L.VatGroup = T.Code
-WHERE T.Name LIKE '%IGIC%' 
-  AND C.DocDate BETWEEN @FechaInicio AND @FechaFin;
