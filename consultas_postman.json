@@ -1,0 +1,1242 @@
+{
+	"info": {
+		"_postman_id": "797874fc-3e04-4a5f-8051-ff1e4b7f40c6",
+		"name": "My Collection",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49978338",
+		"_collection_link": "https://oscarmichelh-827ae332-4114378.postman.co/workspace/Oscar-Michel-Herrera's-Workspac~fff17eac-8cc4-4fb4-8c2a-1cee64aa48e6/collection/49978338-797874fc-3e04-4a5f-8051-ff1e4b7f40c6?action=share&source=collection_link&creator=49978338"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"CompanyDB\":\"ELIPSYS_P\",\"UserName\":\"tu_usuario_b1\",\"Password\":\"tu_password\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Login",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Login"
+					]
+				},
+				"description": "Generated from cURL: curl -k -X POST \"https://HANA10:50000/b1s/v1/Login\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\"CompanyDB\":\"ELIPSYS_P\",\"UserName\":\"tu_usuario_b1\",\"Password\":\"tu_password\"}'\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "Metadata",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=<valor_de_cookie_aqui>"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/BusinessPartners?$select=CardCode,CardName,CardType&$top=10",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"BusinessPartners"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "CardCode,CardName,CardType"
+						},
+						{
+							"key": "$top",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/BusinessPartners?$select=CardCode,CardName,CardType&$top=10\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -b \"B1SESSION=<valor_de_cookie_aqui>\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "BusinessPartners",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648; ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/BusinessPartners?$select=CardCode,CardName&$filter=CardType eq 'cCustomer'&$top=100",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"BusinessPartners"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "CardCode,CardName"
+						},
+						{
+							"key": "$filter",
+							"value": "CardType eq 'cCustomer'"
+						},
+						{
+							"key": "$top",
+							"value": "100"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://<HOST>:50000/b1s/v1/BusinessPartners?$select=CardCode,CardName&$filter=CardType eq 'cCustomer'&$top=100\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=<B1SESSION>; ROUTEID=.node1\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "INVENTARIO (Stock por fecha)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=<tu_cookie>; ROUTEID=<route_if_any>"
+					}
+				],
+				"url": {
+					"raw": "https://<HOST>:50000/b1s/v1/InventoryGenEntries?$select=DocEntry,DocNum,DocDate,DocumentLines&$filter=DocDate le datetime'2025-10-31T23:59:59'&$top=50",
+					"protocol": "https",
+					"host": [
+						"<HOST>"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"InventoryGenEntries"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocEntry,DocNum,DocDate,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "50"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -H \"Cookie: B1SESSION=<tu_cookie>; ROUTEID=<route_if_any>\" \\\n  \"https://<HOST>:50000/b1s/v1/InventoryGenEntries?$select=DocEntry,DocNum,DocDate,DocumentLines&$filter=DocDate le datetime'2025-10-31T23:59:59'&$top=50\""
+			},
+			"response": []
+		},
+		{
+			"name": "LISTADO DE ALBARANES CLIENTES (por día)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=<tu_cookie>"
+					}
+				],
+				"url": {
+					"raw": "https://<HOST>:50000/b1s/v1/DeliveryNotes?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$expand=BusinessPartner($select=CardName)&$filter=DocDate ge datetime'2025-10-31T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"<HOST>"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"DeliveryNotes"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,DocumentLines"
+						},
+						{
+							"key": "$expand",
+							"value": "BusinessPartner($select=CardName)"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-31T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -H \"Cookie: B1SESSION=<tu_cookie>\" \\\n \"https://<HOST>:50000/b1s/v1/DeliveryNotes?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$expand=BusinessPartner($select=CardName)&$filter=DocDate ge datetime'2025-10-31T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'&$top=500\""
+			},
+			"response": []
+		},
+		{
+			"name": "DEUDA CLIENTES (facturas abiertas)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode&$filter=DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'&$orderby=CardCode",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode"
+						},
+						{
+							"key": "$filter",
+							"value": "DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$orderby",
+							"value": "CardCode"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode&$filter=DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'&$orderby=CardCode\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "DEUDA PROVEEDORES",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode&$filter=DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'&$orderby=CardCode",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"PurchaseInvoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode"
+						},
+						{
+							"key": "$filter",
+							"value": "DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$orderby",
+							"value": "CardCode"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocDate,DocDueDate,DocTotal,PaidToDate,CardCode&$filter=DocTotal gt PaidToDate and DocDate le datetime'2025-10-31T23:59:59'&$orderby=CardCode\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "VENTAS CATALONIA (por rango de fechas y agrupación)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/BusinessPartnerGroups?$filter=contains(Name,'CATALONIA')&$select=Code,Name",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"BusinessPartnerGroups"
+					],
+					"query": [
+						{
+							"key": "$filter",
+							"value": "contains(Name,'CATALONIA')"
+						},
+						{
+							"key": "$select",
+							"value": "Code,Name"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/BusinessPartnerGroups?$filter=contains(Name,'CATALONIA')&$select=Code,Name\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "INFORME C&C (por mes)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocDate,DocTotal&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocDate,DocTotal"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocDate,DocTotal&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate lt datetime'2025-11-01T00:00:00'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "COMPRAS POR FAMILIA / ARTÍCULO (por proveedor)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocDate,CardCode,DocumentLines&$filter=CardCode eq 'P0001' and DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"PurchaseInvoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocDate,CardCode,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "CardCode eq 'P0001' and DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocDate,CardCode,DocumentLines&$filter=CardCode eq 'P0001' and DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "ESTADÍSTICAS VENTAS (con dirección de entrega)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "EXCEL LOGÍSTICA (Vivace)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/DeliveryNotes?$select=DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines&$filter=DocNum eq 12345&$top=10",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"DeliveryNotes"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocNum eq 12345"
+						},
+						{
+							"key": "$top",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/DeliveryNotes?$select=DocNum,DocEntry,DocDate,CardCode,CardName,Address2,DocumentLines&$filter=DocNum eq 12345&$top=10\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "CUENTAS CON MOVIMIENTOS POR MES",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-10-01T00:00:00' and ReferenceDate lt datetime'2025-11-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"JournalEntries"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "ReferenceDate,Number,JournalEntryLines"
+						},
+						{
+							"key": "$filter",
+							"value": "ReferenceDate ge datetime'2025-10-01T00:00:00' and ReferenceDate lt datetime'2025-11-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-10-01T00:00:00' and ReferenceDate lt datetime'2025-11-01T00:00:00'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "PyG (Pérdidas y Ganancias)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"JournalEntries"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "ReferenceDate,Number,JournalEntryLines"
+						},
+						{
+							"key": "$filter",
+							"value": "ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=1c86ce86-bef7-11f0-c000-000c297432ec-140321753884288-13648;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "BALANCE",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"JournalEntries"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "ReferenceDate,Number,JournalEntryLines"
+						},
+						{
+							"key": "$filter",
+							"value": "ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "SUMAS Y SALDOS",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"JournalEntries"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "ReferenceDate,Number,JournalEntryLines"
+						},
+						{
+							"key": "$filter",
+							"value": "ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/JournalEntries?$select=ReferenceDate,Number,JournalEntryLines&$filter=ReferenceDate ge datetime'2025-01-01T00:00:00' and ReferenceDate lt datetime'2026-01-01T00:00:00'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "ARTÍCULOS CON CANON DIGITAL",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "LIBRO DE IVA SOPORTADO Y REPERCUTIDO",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "LIBRO DE IGIC SOPORTADO Y REPERCUTIDO 1",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"PurchaseInvoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/PurchaseInvoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		},
+		{
+			"name": "LIBRO DE IGIC SOPORTADO Y REPERCUTIDO 2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Postman Tests -> IGIC repercutido (ventas) y soportado (compras) + Visualize\r",
+							"const HOST = 'HANA10';\r",
+							"const COOKIE = 'B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3';\r",
+							"\r",
+							"// Cambia rango aquí o parametrízalo\r",
+							"const FechaInicio = '2025-10-01T00:00:00';\r",
+							"const FechaFin    = '2025-10-31T23:59:59';\r",
+							"\r",
+							"function sendReq(opts){ return new Promise((resolve,reject)=> pm.sendRequest(opts, (err,res)=> err ? reject(err) : resolve(res))); }\r",
+							"\r",
+							"async function fetchAll(url){\r",
+							"  let acc = [], next = url;\r",
+							"  while (next) {\r",
+							"    const r = await sendReq({ url: next, method: 'GET', header: { 'Cookie': COOKIE, 'Content-Type': 'application/json' }});\r",
+							"    if (r.code !== 200) throw new Error('Error fetching ' + next + ' -> ' + JSON.stringify(r.json()));\r",
+							"    const b = r.json();\r",
+							"    acc = acc.concat(b.value || []);\r",
+							"    next = b['@odata.nextLink'] || null;\r",
+							"    if (next && !next.startsWith('http')) next = `https://${HOST}:50000${next}`;\r",
+							"  }\r",
+							"  return acc;\r",
+							"}\r",
+							"\r",
+							"(async () => {\r",
+							"  try {\r",
+							"    // 1) Traer invoices (ventas)\r",
+							"    const invUrl = `https://${HOST}:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'${FechaInicio}' and DocDate le datetime'${FechaFin}'&$top=500`;\r",
+							"    console.log('Fetching Invoices:', invUrl);\r",
+							"    const invoices = await fetchAll(invUrl);\r",
+							"    console.log('Invoices fetched:', invoices.length);\r",
+							"\r",
+							"    // 2) Traer purchases (OPCH) - probar endpoints alternativos si no existe PurchaseInvoices\r",
+							"    const purchaseCandidates = ['/PurchaseInvoices','/PurchaseInvoicesService','/PurchaseCreditNotes','/APInvoices','/VendorInvoices','/PurchaseOrders','/PurchaseInvoicesSet','/Purchase'];\r",
+							"    let purchases = [];\r",
+							"    for (const pEp of purchaseCandidates) {\r",
+							"      try {\r",
+							"        const url = `https://${HOST}:50000/b1s/v1${pEp}?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'${FechaInicio}' and DocDate le datetime'${FechaFin}'&$top=1`;\r",
+							"        const res = await sendReq({ url, method: 'GET', header: { 'Cookie': COOKIE }});\r",
+							"        if (res.code === 200 && res.json() && Array.isArray(res.json().value)) {\r",
+							"          // usar este endpoint para traer todos (paginar)\r",
+							"          const fullUrl = `https://${HOST}:50000/b1s/v1${pEp}?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'${FechaInicio}' and DocDate le datetime'${FechaFin}'&$top=500`;\r",
+							"          purchases = await fetchAll(fullUrl);\r",
+							"          console.log('Using purchases endpoint:', pEp, ' count:', purchases.length);\r",
+							"          break;\r",
+							"        }\r",
+							"      } catch(e){ /* ignore */ }\r",
+							"    }\r",
+							"\r",
+							"    // 3) Aplanar líneas y coleccionar VatGroups\r",
+							"    function extractLines(docs, type) {\r",
+							"      const out = [];\r",
+							"      docs.forEach(doc => {\r",
+							"        const docNum = doc.DocNum ?? doc.DocEntry ?? '';\r",
+							"        const docDate = doc.DocDate ?? '';\r",
+							"        const card = doc.CardCode ?? '';\r",
+							"        const docLines = doc.DocumentLines || doc.DocumentLinesCollection || doc.DocumentLinesSet || [];\r",
+							"        const arr = Array.isArray(docLines) ? docLines : (docLines ? [docLines] : []);\r",
+							"        arr.forEach(l => {\r",
+							"          out.push({\r",
+							"            Type: type,           // 'Venta' o 'Compra'\r",
+							"            DocNum: docNum,\r",
+							"            DocDate: docDate,\r",
+							"            CardCode: card,\r",
+							"            ItemCode: l.ItemCode || '',\r",
+							"            VatGroup: l.VatGroup || '',\r",
+							"            LineTotal: Number(l.LineTotal ?? l.LineTotalFC ?? l.LineTotalSC ?? 0) || 0,\r",
+							"            LineNum: l.LineNum ?? l.Line_ID ?? '',\r",
+							"            LineMemo: l.LineMemo || l.Description || ''\r",
+							"          });\r",
+							"        });\r",
+							"      });\r",
+							"      return out;\r",
+							"    }\r",
+							"\r",
+							"    const ventaLines = extractLines(invoices, 'Venta');\r",
+							"    const compraLines = extractLines(purchases, 'Compra');\r",
+							"    const allLines = ventaLines.concat(compraLines);\r",
+							"    const vatSet = new Set(allLines.map(r => r.VatGroup).filter(Boolean));\r",
+							"    console.log('Unique VatGroups found:', vatSet.size);\r",
+							"\r",
+							"    // 4) obtener vat groups (Code, Name, Rate) desde SL\r",
+							"    const vatCandidates = ['/VatGroups','/VATGroups','/TaxGroups','/OVTG','/VatGroup','/VatGroupsSet'];\r",
+							"    let vatEp = null;\r",
+							"    for (const ep of vatCandidates) {\r",
+							"      try {\r",
+							"        const testUrl = `https://${HOST}:50000/b1s/v1${ep}?$select=Code,Name,Rate&$top=1`;\r",
+							"        const r = await sendReq({ url: testUrl, method: 'GET', header: { 'Cookie': COOKIE }});\r",
+							"        if (r.code === 200 && r.json() && Array.isArray(r.json().value)) { vatEp = ep; break; }\r",
+							"      } catch(e){}\r",
+							"    }\r",
+							"    console.log('VAT endpoint:', vatEp || 'NO_ENCONTRADO');\r",
+							"\r",
+							"    const vatMap = {}; // code -> {Name, Rate}\r",
+							"    if (vatEp && vatSet.size) {\r",
+							"      const vgArray = Array.from(vatSet);\r",
+							"      const BATCH = 50;\r",
+							"      for (let i=0;i<vgArray.length;i+=BATCH) {\r",
+							"        const batch = vgArray.slice(i,i+BATCH);\r",
+							"        const filter = batch.map(v => `Code eq '${v.replace(/'/g,\"''\")}'`).join(' or ');\r",
+							"        const url = `https://${HOST}:50000/b1s/v1${vatEp}?$select=Code,Name,Rate&$filter=${encodeURIComponent(filter)}`;\r",
+							"        try {\r",
+							"          const res = await sendReq({ url, method: 'GET', header: { 'Cookie': COOKIE }});\r",
+							"          if (res.code === 200) {\r",
+							"            (res.json().value || []).forEach(v => { vatMap[v.Code] = { Name: v.Name || v.name || '', Rate: Number(v.Rate||0) }; });\r",
+							"          }\r",
+							"        } catch(e){ console.log('vat batch err', e && e.message); }\r",
+							"      }\r",
+							"    }\r",
+							"\r",
+							"    // 5) Filtrar por Name containing 'IGIC' (case-insensitive) y calcular importes\r",
+							"    function isIGIC(vatCode) {\r",
+							"      if (!vatCode) return false;\r",
+							"      const meta = vatMap[vatCode];\r",
+							"      if (meta && typeof meta.Name === 'string') return meta.Name.toLowerCase().includes('igic');\r",
+							"      // si no tenemos name en vatMap, intentar probar la propia code (poco probable)\r",
+							"      return String(vatCode).toLowerCase().includes('igic');\r",
+							"    }\r",
+							"\r",
+							"    const repercutido = [];\r",
+							"    const soportado = [];\r",
+							"\r",
+							"    allLines.forEach(l => {\r",
+							"      const vg = l.VatGroup;\r",
+							"      const meta = vatMap[vg] || { Name: '', Rate: 0 };\r",
+							"      if (!isIGIC(vg)) return;\r",
+							"      const rate = meta.Rate || 0;\r",
+							"      const ivaImporte = Number((l.LineTotal * rate / 100) || 0);\r",
+							"      const record = {\r",
+							"        DocNum: l.DocNum,\r",
+							"        DocDate: l.DocDate,\r",
+							"        CardCode: l.CardCode,\r",
+							"        VatGroup: vg,\r",
+							"        VatGroupName: meta.Name || '',\r",
+							"        IGIC: rate,\r",
+							"        BaseImponible: Number(l.LineTotal),\r",
+							"        IGICImporte: ivaImporte,\r",
+							"        ItemCode: l.ItemCode,\r",
+							"        LineNum: l.LineNum,\r",
+							"        LineMemo: l.LineMemo\r",
+							"      };\r",
+							"      if (l.Type === 'Venta') repercutido.push(record);\r",
+							"      else soportado.push(record);\r",
+							"    });\r",
+							"\r",
+							"    // 6) guardar variables y mostrar en consola\r",
+							"    pm.collectionVariables.set('igic_repercutido', JSON.stringify(repercutido));\r",
+							"    pm.collectionVariables.set('igic_soportado', JSON.stringify(soportado));\r",
+							"    console.log('IGIC repercutido rows:', repercutido.length);\r",
+							"    console.log('IGIC soportado rows:', soportado.length);\r",
+							"\r",
+							"    // 7) Visualize: dos tablas (Ventas / Compras) con buscador y export CSV (;)\r",
+							"    const template = `\r",
+							"<style>\r",
+							"  body{font-family:Inter,Arial,sans-serif;margin:10px;color:#111}\r",
+							"  .controls{display:flex;gap:8px;align-items:center;margin-bottom:8px}\r",
+							"  .search{flex:1;padding:8px;border-radius:6px;border:1px solid #ddd}\r",
+							"  .btn{padding:8px 12px;border-radius:6px;border:0;background:#2f6fdb;color:#fff;cursor:pointer}\r",
+							"  .panel{margin-top:8px;border:1px solid #eee;border-radius:6px;padding:8px;background:#fff}\r",
+							"  table{width:100%;border-collapse:collapse;font-size:13px}\r",
+							"  th,td{padding:8px 10px;border-bottom:1px solid #f3f3f3;text-align:left}\r",
+							"  th{position:sticky;top:0;background:#fafafa;cursor:pointer}\r",
+							"  td.right{text-align:right}\r",
+							"</style>\r",
+							"\r",
+							"<div>\r",
+							"  <div class=\"controls\">\r",
+							"    <input id=\"search\" class=\"search\" placeholder=\"Buscar (doc, cliente, item, vatgroup, monto)...\">\r",
+							"    <button id=\"reset\" class=\"btn\" style=\"background:#6b7280\">Reset</button>\r",
+							"    <button id=\"export\" class=\"btn\">Exportar CSV (Venta)</button>\r",
+							"    <button id=\"export2\" class=\"btn\" style=\"background:#16a34a\">Exportar CSV (Compra)</button>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"panel\">\r",
+							"    <h3>IGIC REPERCUTIDO (Ventas) <small id=\"countV\" style=\"color:#666\"></small></h3>\r",
+							"    <div style=\"max-height:260px;overflow:auto\"><table id=\"tblV\"><thead><tr>\r",
+							"      <th data-col=\"DocNum\">DocNum</th><th data-col=\"DocDate\">Fecha</th><th data-col=\"CardCode\">CardCode</th><th data-col=\"VatGroup\">VatGroup</th>\r",
+							"      <th data-col=\"VatGroupName\">VatName</th><th data-col=\"IGIC\">IGIC</th><th data-col=\"BaseImponible\">Base</th><th data-col=\"IGICImporte\">IGICImporte</th>\r",
+							"      <th data-col=\"ItemCode\">Item</th><th data-col=\"LineNum\">Ln</th>\r",
+							"    </tr></thead><tbody id=\"bodyV\"></tbody></table></div>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"panel\">\r",
+							"    <h3>IGIC SOPORTADO (Compras) <small id=\"countC\" style=\"color:#666\"></small></h3>\r",
+							"    <div style=\"max-height:260px;overflow:auto\"><table id=\"tblC\"><thead><tr>\r",
+							"      <th data-col=\"DocNum\">DocNum</th><th data-col=\"DocDate\">Fecha</th><th data-col=\"CardCode\">CardCode</th><th data-col=\"VatGroup\">VatGroup</th>\r",
+							"      <th data-col=\"VatGroupName\">VatName</th><th data-col=\"IGIC\">IGIC</th><th data-col=\"BaseImponible\">Base</th><th data-col=\"IGICImporte\">IGICImporte</th>\r",
+							"      <th data-col=\"ItemCode\">Item</th><th data-col=\"LineNum\">Ln</th>\r",
+							"    </tr></thead><tbody id=\"bodyC\"></tbody></table></div>\r",
+							"  </div>\r",
+							"</div>\r",
+							"\r",
+							"<script>\r",
+							"(function(){\r",
+							"  const ventas = {{{ventas}}} || [];\r",
+							"  const compras = {{{compras}}} || [];\r",
+							"  const bodyV = document.getElementById('bodyV');\r",
+							"  const bodyC = document.getElementById('bodyC');\r",
+							"  const countV = document.getElementById('countV');\r",
+							"  const countC = document.getElementById('countC');\r",
+							"\r",
+							"  const fmt = v => { const n=Number(v); if (isNaN(n)) return v||''; return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); };\r",
+							"\r",
+							"  function renderTable(rows, bodyEl) {\r",
+							"    bodyEl.innerHTML = '';\r",
+							"    if (!rows.length) { bodyEl.innerHTML = '<tr><td colspan=\"10\" style=\"color:#666;padding:10px\">No hay datos</td></tr>'; return; }\r",
+							"    const frag = document.createDocumentFragment();\r",
+							"    rows.forEach(r => {\r",
+							"      const tr = document.createElement('tr');\r",
+							"      ['DocNum','DocDate','CardCode','VatGroup','VatGroupName'].forEach(k=>{ const td=document.createElement('td'); td.textContent = r[k] ?? ''; tr.appendChild(td);});\r",
+							"      const tdIG = document.createElement('td'); tdIG.textContent = r.IGIC ?? ''; tr.appendChild(tdIG);\r",
+							"      const tdBase = document.createElement('td'); tdBase.className='right'; tdBase.textContent = fmt(r.BaseImponible); tr.appendChild(tdBase);\r",
+							"      const tdImp = document.createElement('td'); tdImp.className='right'; tdImp.textContent = fmt(r.IGICImporte); tr.appendChild(tdImp);\r",
+							"      const tdItem = document.createElement('td'); tdItem.textContent = r.ItemCode || ''; tr.appendChild(tdItem);\r",
+							"      const tdLn = document.createElement('td'); tdLn.textContent = r.LineNum ?? ''; tr.appendChild(tdLn);\r",
+							"      frag.appendChild(tr);\r",
+							"    });\r",
+							"    bodyEl.appendChild(frag);\r",
+							"  }\r",
+							"\r",
+							"  function updateCounts() {\r",
+							"    countV.textContent = ' (' + ventas.length + ' filas)';\r",
+							"    countC.textContent = ' (' + compras.length + ' filas)';\r",
+							"  }\r",
+							"\r",
+							"  renderTable(ventas, bodyV);\r",
+							"  renderTable(compras, bodyC);\r",
+							"  updateCounts();\r",
+							"\r",
+							"  // search & filter\r",
+							"  const search = document.getElementById('search');\r",
+							"  search.addEventListener('input', function(e){\r",
+							"    const q = e.target.value.trim().toLowerCase();\r",
+							"    if (!q) { renderTable(ventas, bodyV); renderTable(compras, bodyC); updateCounts(); return; }\r",
+							"    const fV = ventas.filter(r => JSON.stringify(r).toLowerCase().includes(q));\r",
+							"    const fC = compras.filter(r => JSON.stringify(r).toLowerCase().includes(q));\r",
+							"    renderTable(fV, bodyV); renderTable(fC, bodyC);\r",
+							"    document.getElementById('countV').textContent = ' (' + fV.length + ' filas)';\r",
+							"    document.getElementById('countC').textContent = ' (' + fC.length + ' filas)';\r",
+							"  });\r",
+							"\r",
+							"  document.getElementById('reset').addEventListener('click', function(){ search.value=''; renderTable(ventas, bodyV); renderTable(compras, bodyC); updateCounts(); });\r",
+							"\r",
+							"  // export CSV helpers (semicolon)\r",
+							"  function exportCSV(rows, filename) {\r",
+							"    if (!rows.length) { alert('No hay filas para exportar'); return; }\r",
+							"    const cols = ['DocNum','DocDate','CardCode','VatGroup','VatGroupName','IGIC','BaseImponible','IGICImporte','ItemCode','LineNum','LineMemo'];\r",
+							"    const esc = v => '\"' + String(v===null||v===undefined?'':v).replace(/\"/g,'\"\"') + '\"';\r",
+							"    let csv = cols.map(c=>'\"'+c+'\"').join(';') + '\\\\n';\r",
+							"    rows.forEach(r => {\r",
+							"      csv += cols.map(c => esc(r[c])).join(';') + '\\\\n';\r",
+							"    });\r",
+							"    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });\r",
+							"    const url = URL.createObjectURL(blob);\r",
+							"    const a = document.createElement('a'); a.href = url;\r",
+							"    a.download = filename;\r",
+							"    a.click(); URL.revokeObjectURL(url);\r",
+							"  }\r",
+							"\r",
+							"  document.getElementById('export').addEventListener('click', function(){ exportCSV(ventas, 'igic_repercutido.csv'); });\r",
+							"  document.getElementById('export2').addEventListener('click', function(){ exportCSV(compras, 'igic_soportado.csv'); });\r",
+							"\r",
+							"  // sort columns (simple)\r",
+							"  document.querySelectorAll('th[data-col]').forEach(th => {\r",
+							"    th.addEventListener('click', function(){\r",
+							"      const col = th.getAttribute('data-col');\r",
+							"      const table = th.closest('table');\r",
+							"      const isV = table.id === 'tblV';\r",
+							"      const arr = isV ? ventas : compras;\r",
+							"      const asc = !th.classList.contains('asc');\r",
+							"      document.querySelectorAll('th').forEach(x=>x.classList.remove('asc','desc'));\r",
+							"      th.classList.add(asc ? 'asc' : 'desc');\r",
+							"      arr.sort((a,b) => {\r",
+							"        const A = a[col] ?? ''; const B = b[col] ?? '';\r",
+							"        if (!isNaN(parseFloat(A)) && !isNaN(parseFloat(B))) return asc ? parseFloat(A)-parseFloat(B) : parseFloat(B)-parseFloat(A);\r",
+							"        return asc ? String(A).localeCompare(String(B)) : String(B).localeCompare(String(A));\r",
+							"      });\r",
+							"      renderTable(arr, isV ? bodyV : bodyC);\r",
+							"    });\r",
+							"  });\r",
+							"\r",
+							"})();\r",
+							"</script>\r",
+							"    `;\r",
+							"\r",
+							"    pm.visualizer.set(template, { ventas: JSON.stringify(repercutido), compras: JSON.stringify(soportado) });\r",
+							"\r",
+							"  } catch (err) {\r",
+							"    console.log('ERROR IGIC script:', err && err.message ? err.message : err);\r",
+							"    pm.visualizer.set('<div style=\"font-family:Arial;padding:12px;color:red\">Error: ' + (err && err.message ? err.message : err) + '</div>', {});\r",
+							"    pm.test('ScriptError', () => pm.expect(err).to.be.null);\r",
+							"  }\r",
+							"})();\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3"
+					}
+				],
+				"url": {
+					"raw": "https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500",
+					"protocol": "https",
+					"host": [
+						"HANA10"
+					],
+					"port": "50000",
+					"path": [
+						"b1s",
+						"v1",
+						"Invoices"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "DocNum,DocEntry,DocDate,CardCode,DocumentLines"
+						},
+						{
+							"key": "$filter",
+							"value": "DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'"
+						},
+						{
+							"key": "$top",
+							"value": "500"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -k -X GET \"https://HANA10:50000/b1s/v1/Invoices?$select=DocNum,DocEntry,DocDate,CardCode,DocumentLines&$filter=DocDate ge datetime'2025-10-01T00:00:00' and DocDate le datetime'2025-10-31T23:59:59'&$top=500\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Cookie: B1SESSION=0d161108-bfcb-11f0-c000-000c297432ec-140321753884288-29867;ROUTEID=.node3\"\r\n"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "stock_result",
+			"value": ""
+		},
+		{
+			"key": "facturas_abiertas_enriquecidas",
+			"value": ""
+		},
+		{
+			"key": "deuda_proveedores_raw",
+			"value": ""
+		},
+		{
+			"key": "informe_cc_result",
+			"value": ""
+		},
+		{
+			"key": "excel_logistica_vivace",
+			"value": ""
+		},
+		{
+			"key": "pyg_result",
+			"value": ""
+		},
+		{
+			"key": "balance_result",
+			"value": ""
+		},
+		{
+			"key": "sumas_saldos_result",
+			"value": ""
+		},
+		{
+			"key": "articulos_canon_digital",
+			"value": ""
+		},
+		{
+			"key": "igic_repercutido",
+			"value": ""
+		},
+		{
+			"key": "igic_soportado",
+			"value": ""
+		}
+	]
+}
