@@ -157,21 +157,55 @@ ORDER BY V."DocDate", V."DocNum";
 ---------------------------------------------------------------------------------------------
 -- 9. EXCEL LOGÍSTICA (Vivace)
 ---------------------------------------------------------------------------------------------
+-- Ejemplo HANA: DeliveryNotes lines + campos desde Orders cuando exista BaseEntry
+-- Query para SAP HANA / SAP B1 que genera las columnas del CSV solicitado
 SELECT
-    D."DocNum"        AS "DocNum",
-    D."DocDate"       AS "DocDate",
-    D."CardCode"      AS "CardCode",
-    D."CardName"      AS "CardName",
-    L."ItemCode"      AS "ItemCode",
-    L."Dscription"    AS "Dscription",
-    L."Quantity"      AS "Quantity",
-    L."WhsCode"       AS "WhsCode",
-    D."Address2"      AS "DireccionEntrega"
-FROM "ODLN" D
-         JOIN "DLN1" L ON D."DocEntry" = L."DocEntry"
-WHERE D."DocNum" = 12345
-ORDER BY L."LineNum";
-
+    COALESCE(o.Reference1, d.Reference1, TO_VARCHAR(o.DocNum))                                  AS "Código Pedido",     -- Reference1 del pedido o fallback DocNum
+    TO_VARCHAR(o.DocDate,'DD/MM/YYYY')                                                             AS "Fecha Pedido",
+    TO_VARCHAR(d.DocNum)                                                                          AS "Núm.Albarán",
+    TO_VARCHAR(d.DocDate,'DD/MM/YYYY')                                                             AS "Fecha Albarán",
+    COALESCE(d.Reference2, '')                                                                     AS "Expediente",
+    d.CardCode                                                                                    AS "Código destinatario",
+    d.CardName                                                                                     AS "Nombre destinatario",
+    COALESCE(d.Address2, d.Address, o.Address)                                                     AS "Dirección destinatario",
+    COALESCE(odx.ShipToZipCode, ttx.ZipCodeS, '')                                                  AS "C.Postal destinatario",  -- ver notas
+    COALESCE(odx.ShipToCity, ttx.CityS, '')                                                        AS "Población destinatario",
+    COALESCE(odx.ShipToCounty, ttx.CountyS, '')                                                    AS "Provincia destinatario",
+    COALESCE(odx.ShipToCountry, ttx.CountryS, '')                                                  AS "País destinatario",
+    COALESCE(d.FederalTaxID, o.FederalTaxID, c.FederalTaxID, '')                                   AS "CIF destinatario",
+    COALESCE(d.Phone1, o.Phone1, c.Phone1, '')                                                      AS "Teléfono destinatario",
+    COALESCE(d.Comments, o.Comments, '')                                                            AS "Obs.destinatario",
+    CASE
+        WHEN UPPER(COALESCE(l.ItemCode,'') ) LIKE '%PORTES%' THEN COALESCE(l.LineTotal, l.Price, 0)
+        ELSE NULL
+        END                                                                                             AS "Portes",
+    COALESCE(ttx.BoEValue, '')                                                                      AS "Valor Asegurado",        -- posible campo en TaxExtension
+    ''                                                                                              AS "Albarán valorado",
+    COALESCE(ttx.Carrier, '')                                                                       AS "Transportista",
+    COALESCE(ttx.Vehicle, '')                                                                       AS "Servicio transportista",
+    l.LineNum                                                                                        AS "Línia comanda",
+    COALESCE(l.ItemCode, '')                                                                         AS "Código artículo",
+    COALESCE(l.ItemDescription, l.Dscription, '')                                                    AS "Descripción",
+    TO_DECIMAL(COALESCE(l.Quantity,0), 19, 6)                                                         AS "Cantidad",
+    COALESCE(l.Weight1, l.Weight2, 0)                                                                AS "Peso",
+    COALESCE(
+            NULLIF(LTRIM(RTRIM(COALESCE(odx.ShipToEMail, odx.BillToEMail, o.AddressExtension_ShipToEMail, c.E_Mail))), ''),
+            ''
+    )                                                                                                AS "e-mail",
+    COALESCE(o.NumAtCard, d.NumAtCard, '')                                                            AS "S/Referencia Pedido",
+    COALESCE(d.Comments, o.Comments, '')                                                              AS "Observaciones externas",
+    COALESCE(l.FreeText, '')                                                                          AS "Observaciones almacen",
+    COALESCE(d.BPLName, o.BPLName, '')                                                                AS "Datos empresa"
+FROM ODLN d
+         LEFT JOIN DLN1 l         ON d.DocEntry = l.DocEntry
+         LEFT JOIN ORDR o         ON o.DocNum = d.DocNum        -- unión por DocNum como solicitaste
+         LEFT JOIN OCRD c         ON d.CardCode = c.CardCode
+-- A continuación: lecturas desde tablas de extensión o vistas (puede que necesites adaptarlas)
+         LEFT JOIN "YOUR_SCHEMA"."ODLN_ADDRESS_EXTENSION" odx ON odx.DocEntry = d.DocEntry    -- Ejemplo: si tú tienes una vista/tab extensión
+         LEFT JOIN "YOUR_SCHEMA"."ODLN_TAX_EXTENSION" ttx     ON ttx.DocEntry = d.DocEntry     -- Ejemplo TaxExtension
+WHERE d.DocNum = :P_NUMALBARAN                         -- parámetro; o quítalo para rango
+-- AND d.DocumentStatus = 'bost_Open'                -- si quieres filtrar por estado (open/close)
+ORDER BY d.DocNum, l.LineNum;
 
 ---------------------------------------------------------------------------------------------
 -- 10. CUENTAS CON MOVIMIENTOS POR MES
