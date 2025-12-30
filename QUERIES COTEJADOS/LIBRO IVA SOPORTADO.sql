@@ -8,102 +8,96 @@
 
  CONSIDERACIONES IMPORTANTES:
  - SAP B1 NO guarda explícitamente:
-     • N/I, N/B, Tipo AUT → se dejan como columnas vacías.
-     • Medio de pago detallado por línea → aproximado desde pagos.
+   • N/I, N/B, Tipo AUT → se dejan como columnas vacías.
+   • Medio de pago detallado por línea → aproximado desde pagos.
  - El TOTAL DOCUM corresponde al total de la factura (no por tipo).
  - Fecha Pago / Importe Pago se obtienen desde pagos salientes (OVPM).
  - Cod.Imp. se toma desde OVTG (grupo de IVA).
 ****************************************************************************************/
 
 SELECT
-    C."DocEntry"                                AS "N.REGISTRO",
+ C."DocEntry" AS "N.REGISTRO",
 
-    TO_VARCHAR(C."DocDate", 'DD/MM/YYYY')       AS "FECHA",
+ TO_VARCHAR(C."DocDate", 'DD/MM/YYYY') AS "FECHA",
 
-    BP."FederalTaxID"                           AS "NIF/DNI",
+ BP."LicTradNum" AS "NIF/DNI",
 
-    BP."CardName"                              AS "NOMBRE",
+ BP."CardName" AS "NOMBRE",
 
-    SUM(L."LineTotal")                         AS "BASE IVA",
+ SUM(L."LineTotal") AS "BASE IVA",
 
-    T."Rate"                                   AS "TIPO",
+ T."Rate" AS "TIPO",
 
-    SUM(L."LineTotal" * T."Rate" / 100)        AS "CUOTA",
+ SUM(L."LineTotal" * T."Rate" / 100) AS "CUOTA",
 
-    C."DocTotal"                               AS "TOTAL DOCUM",
+ C."DocTotal" AS "TOTAL DOCUM",
 
-    'F'                                        AS "F/A",          -- Factura
+ 'F' AS "F/A", -- Factura
 
-    ''                                         AS "N/I",          -- No informado en B1
+ '' AS "N/I", -- No informado en B1
+ '' AS "N/B", -- No informado en B1
+ '' AS "Tipo AUT", -- No aplica
 
-    ''                                         AS "N/B",          -- No informado en B1
+ C."NumAtCard" AS "S/factura", -- Nº factura proveedor
 
-    ''                                         AS "Tipo AUT",     -- No aplica
+ C."Comments" AS "Comentarios",
 
-    C."NumAtCard"                              AS "S/factura",    -- Nº factura proveedor
+ BP."CardName" AS "Factura Directa a",
 
-    C."Comments"                               AS "Comentarios",
+ TO_VARCHAR(P."DocDate", 'DD/MM/YYYY') AS "Fecha Pago",
 
-    BP."CardName"                              AS "Factura Directa a",
+ P."DocTotal" AS "Importe Pago",
 
-    TO_VARCHAR(P."DocDate", 'DD/MM/YYYY')      AS "Fecha Pago",
+ P."CashAcct" AS "Medio Cuenta",
 
-    P."DocTotal"                               AS "Importe Pago",
+ T."Code" AS "Cod.Imp.",
 
-    P."CashAcct"                               AS "Medio Cuenta",
-
-    T."Code"                                   AS "Cod.Imp.",
-
-    T."Name"                                   AS "Descripción"
+ T."Name" AS "Descripción"
 
 FROM "OPCH" C
-         INNER JOIN "PCH1" L
-                    ON C."DocEntry" = L."DocEntry"
+INNER JOIN "PCH1" L
+ ON C."DocEntry" = L."DocEntry"
 
-         LEFT JOIN "OVTG" T
-                   ON L."VatGroup" = T."Code"
+LEFT JOIN "OVTG" T
+ ON L."VatGroup" = T."Code"
 
-         LEFT JOIN "OCRD" BP
-                   ON C."CardCode" = BP."CardCode"
+LEFT JOIN "OCRD" BP
+ ON C."CardCode" = BP."CardCode"
 
-         LEFT JOIN "VPM2" P2
-                   ON P2."DocEntry" = C."DocEntry"
-                       AND P2."InvType" = 18               -- 18 = Factura proveedor
+LEFT JOIN "VPM2" P2
+ ON P2."DocEntry" = C."DocEntry"
+ AND P2."InvType" = 18 -- Factura proveedor
 
-         LEFT JOIN "OVPM" P
-                   ON P."DocEntry" = P2."DocNum"
+LEFT JOIN "OVPM" P
+ ON P."DocEntry" = P2."DocNum"
 
 WHERE
-    C."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
-  AND T."Rate" IS NOT NULL
+ C."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+AND T."Rate" IS NOT NULL
 
 GROUP BY
-    C."DocEntry",
-    C."DocDate",
-    BP."FederalTaxID",
-    BP."CardName",
-    T."Rate",
-    C."DocTotal",
-    C."NumAtCard",
-    C."Comments",
-    P."DocDate",
-    P."DocTotal",
-    P."CashAcct",
-    T."Code",
-    T."Name"
+ C."DocEntry",
+ C."DocDate",
+ BP."LicTradNum",
+ BP."CardName",
+ T."Rate",
+ C."DocTotal",
+ C."NumAtCard",
+ C."Comments",
+ P."DocDate",
+ P."DocTotal",
+ P."CashAcct",
+ T."Code",
+ T."Name"
 
 ORDER BY
-    C."DocDate",
-    C."DocEntry",
-    T."Rate";
+ C."DocDate",
+ C."DocEntry",
+ T."Rate";
 
 /****************************************************************************************
  NOTAS FINALES:
-
- - El resultado está listo para exportarse directamente a CSV.
- - Si deseas:
-     • Separar por proveedor → agregar BP.CardCode
-     • Separar por factura → quitar el GROUP BY por tasa
-     • Usar fecha contable → cambiar DocDate por TaxDate
- - Este modelo es compatible con Postman / Service Layer / Query Manager.
+ - Listo para exportar a CSV.
+ - LicTradNum se usa como NIF/DNI estándar en SAP B1 HANA.
+ - Modelo compatible con Query Manager / Service Layer.
 ****************************************************************************************/

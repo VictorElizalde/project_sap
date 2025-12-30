@@ -12,64 +12,68 @@
  2) SAP B1 NO maneja Remesas, T.Rem. ni Cl.Agrup. como estándar:
     → se dejan como columnas vacías.
  3) "Situación" se interpreta como:
-      - 'Abierta'  → DocStatus = 'O'
-      - 'Cerrada'  → DocStatus = 'C'
+    - 'Abierta' → DocStatus = 'O'
+    - 'Cerrada' → DocStatus = 'C'
  4) "Dias Demora" se calcula contra la fecha del sistema (CURRENT_DATE).
  5) "C.G." se interpreta como Cuenta Contable de control del cliente (OCRD.DebPayAcct).
  6) Importe = Total factura - Pagado a la fecha.
 ******************************************************************************************/
 
 SELECT
-    I.CardCode                                      AS "Cliente",
-    C.CardName                                     AS "Nombre",
+ I."CardCode"      AS "Cliente",
+ C."CardName"      AS "Nombre",
 
-    I.DocDueDate                                   AS "Vto",
-    I.DocNum                                       AS "Documento",
-    'Factura'                                      AS "Tipo Doc.",
+ I."DocDueDate"    AS "Vto",
+ I."DocNum"        AS "Documento",
+ 'Factura'         AS "Tipo Doc.",
 
-    CASE
-        WHEN I.DocStatus = 'O' THEN 'Abierta'
-        ELSE 'Cerrada'
-        END                                            AS "Situación",
+ CASE
+   WHEN I."DocStatus" = 'O' THEN 'Abierta'
+   ELSE 'Cerrada'
+ END               AS "Situación",
 
-    I.DocDate                                      AS "Fecha",
+ I."DocDate"       AS "Fecha",
 
-    C.GroupNum                                     AS "Tem.",            -- Condición de pago
-    I.SlpCode                                      AS "Agente",
+ C."GroupNum"      AS "Tem.",        -- Condición de pago
+ I."SlpCode"       AS "Agente",
 
-    C.BankCode                                     AS "Banco",
-    ''                                              AS "Remesa",          -- No estándar SAP
-    ''                                              AS "T.Rem.",          -- No estándar SAP
+ C."BankCode"      AS "Banco",
+ ''                AS "Remesa",      -- No estándar SAP
+ ''                AS "T.Rem.",      -- No estándar SAP
 
-    C.DebPayAcct                                   AS "C.G.",             -- Cuenta control cliente
+ C."DebPayAcct"    AS "C.G.",        -- Cuenta control cliente
 
-    (I.DocTotal - I.PaidToDate)                    AS "Importe",
+ ( COALESCE(I."DocTotal",0)
+ - COALESCE(I."PaidToDate",0) )       AS "Importe",
 
-    (I.DocTotalFC - I.PaidFC)                      AS "Importe Div.",
-    I.DocCur                                       AS "DIV",
+ ( COALESCE(I."DocTotalFC",0)
+ - COALESCE(I."PaidFC",0) )           AS "Importe Div.",
 
-    C.LicTradNum                                   AS "NIF",
+ I."DocCur"        AS "DIV",
 
-    ''                                              AS "Cl.Agrup.",       -- No estándar SAP
+ C."LicTradNum"    AS "NIF",
 
-    CASE
-        WHEN I.DocStatus = 'O'
-            AND I.DocDueDate < CURRENT_DATE
-            THEN DAYS_BETWEEN(I.DocDueDate, CURRENT_DATE)
-        ELSE 0
-        END                                            AS "Dias Demora"
+ ''                AS "Cl.Agrup.",    -- No estándar SAP
 
-FROM OINV I
-         JOIN OCRD C
-              ON I.CardCode = C.CardCode
+ CASE
+   WHEN I."DocStatus" = 'O'
+    AND I."DocDueDate" < CURRENT_DATE
+   THEN DAYS_BETWEEN(I."DocDueDate", CURRENT_DATE)
+   ELSE 0
+ END               AS "Dias Demora"
+
+FROM "OINV" I
+INNER JOIN "OCRD" C
+        ON I."CardCode" = C."CardCode"
 
 WHERE
-    I.DocStatus = 'O'                      -- Solo facturas abiertas
-  AND I.DocTotal > I.PaidToDate          -- Con saldo pendiente
+ I."DocStatus" = 'O'                           -- Solo facturas abiertas
+AND COALESCE(I."DocTotal",0)
+  > COALESCE(I."PaidToDate",0)                 -- Con saldo pendiente
 
 ORDER BY
-    I.DocDueDate,
-    C.CardName;
+ I."DocDueDate",
+ C."CardName";
 
 /******************************************************************************************
  NOTAS FINALES:
@@ -80,9 +84,9 @@ ORDER BY
  ✔ Compatible con SAP Business One sobre HANA (SQLScript).
 
  Sugerencia:
- - Este query es ideal para:
-     ▸ Crystal Reports
-     ▸ DataGrip
-     ▸ Consultas de Usuario
-     ▸ Exportación directa a CSV
+ - Ideal para:
+   ▸ Crystal Reports
+   ▸ DataGrip
+   ▸ Consultas de Usuario
+   ▸ Exportación directa a CSV
 ******************************************************************************************/

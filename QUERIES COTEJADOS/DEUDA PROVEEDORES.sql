@@ -1,74 +1,80 @@
 /* =============================================================================
-   QUERY: DEUDA PROVEEDORES – CSV EXPORT
-   SISTEMA: SAP Business One sobre HANA
-   OBJETIVO:
-   - Generar un CSV de deuda pendiente de proveedores
-   - Una fila por factura abierta
-   - Cobertura máxima de campos estándar SAP B1
-   ============================================================================= */
+ QUERY: DEUDA PROVEEDORES – CSV EXPORT
+ SISTEMA: SAP Business One sobre HANA
+
+ OBJETIVO:
+ - Generar un CSV de deuda pendiente de proveedores
+ - Una fila por factura abierta
+ - Cobertura máxima de campos estándar SAP B1
+ ============================================================================= */
 
 SELECT
-    P.CardCode                                   AS "Proveedor",
-    P.CardName                                   AS "Nombre",
+ P."CardCode" AS "Proveedor",
+ P."CardName" AS "Nombre",
 
-    TO_VARCHAR(F.DocDueDate, 'DD/MM/YYYY')       AS "Vto",
-    F.DocNum                                     AS "Documento",
+ TO_VARCHAR(F."DocDueDate", 'DD/MM/YYYY') AS "Vto",
+ F."DocNum" AS "Documento",
 
-    CASE F.ObjType
-        WHEN '18' THEN 'Factura Proveedor'
-        WHEN '19' THEN 'Nota Crédito Proveedor'
-        ELSE 'Documento'
-        END                                          AS "Tipo Doc.",
+CASE F."ObjType"
+WHEN '18' THEN 'Factura Proveedor'
+WHEN '19' THEN 'Nota Crédito Proveedor'
+ELSE 'Documento'
+END AS "Tipo Doc.",
 
-    TO_VARCHAR(F.DocDate, 'DD/MM/YYYY')          AS "Fecha",
+ TO_VARCHAR(F."DocDate", 'DD/MM/YYYY') AS "Fecha",
 
-    COALESCE(F.NumAtCard, '')                    AS "S/Factura",
+COALESCE(F."NumAtCard", '') AS "S/Factura",
 
-    F.DocStatus                                  AS "Est.",
+ F."DocStatus" AS "Est.",
 
-    F.DocEntry                                   AS "Id.",
+ F."DocEntry" AS "Id.",
 
-    COALESCE(F.PeyMethod, '')                    AS "T.P.",
+COALESCE(F."PeyMethod", '') AS "T.P.",
 
-    COALESCE(P.BankCode, '')                     AS "Banco",
+COALESCE(P."BankCode", '') AS "Banco",
 
-    COALESCE(P.SWIFT, '')                        AS "C.I.G.",
+COALESCE(P."SWIFT", '') AS "C.I.G.",
 
-    (F.DocTotal - F.PaidToDate)                  AS "Importe",
+ (F."DocTotal" - F."PaidToDate") AS "Importe",
 
-    CASE
-        WHEN F.DocCur <> F.SysCurr
-            THEN (F.DocTotalFC - F.PaidFC)
-        ELSE 0
-        END                                          AS "Importe Div.",
+CASE
+WHEN COALESCE(F."DocTotalFC", 0) <> 0
+THEN (F."DocTotalFC" - F."PaidFC")
+ELSE 0
+END AS "Importe Div.",
 
-    F.DocCur                                     AS "DIV"
+ F."DocCur" AS "DIV"
 
-FROM OPCH F
-         JOIN OCRD P
-              ON F.CardCode = P.CardCode
+FROM "OPCH" F
+INNER JOIN "OCRD" P
+ON F."CardCode" = P."CardCode"
 
 WHERE
-    F.DocTotal > F.PaidToDate              -- Solo documentos con saldo pendiente
-  AND F.Canceled = 'N'                   -- Excluir cancelados
-  AND F.DocDate <= :FechaConsulta        -- Parámetro de fecha
+ F."Canceled" = 'N'                         -- Excluir cancelados
+AND F."DocTotal" > F."PaidToDate"           -- Con saldo pendiente
+AND (
+ '[%0]' = '' 
+ OR F."DocDate" <= TO_DATE('[%0]', 'DD/MM/YYYY')
+ )
 
 ORDER BY
-    P.CardName,
-    F.DocDueDate;
+ P."CardName",
+ F."DocDueDate";
 
 /* =============================================================================
-   NOTAS Y CONSIDERACIONES IMPORTANTES
-   -----------------------------------------------------------------------------
-   1. Este query devuelve SOLO facturas de proveedor abiertas (con saldo).
-   2. Si deseas incluir pagos parciales como líneas separadas → no aplica aquí.
-   3. "Importe Div." solo se rellena cuando la moneda ≠ moneda del sistema.
-   4. Banco y C.I.G. dependen de datos maestros del proveedor (OCRD).
-   5. Tipo Doc. se identifica por ObjType estándar:
-      - 18 = Factura proveedor
-      - 19 = Nota crédito proveedor
-   6. Compatible para:
-      - Query Manager
-      - Service Layer (con adaptación de parámetros)
-      - Exportación directa a CSV
-   ============================================================================= */
+ NOTAS Y CONSIDERACIONES IMPORTANTES
+ -----------------------------------------------------------------------------
+ 1. Devuelve SOLO facturas de proveedor con saldo pendiente.
+ 2. No desglosa pagos parciales (una fila por factura).
+ 3. "Importe Div." se calcula SOLO si existe importe en moneda extranjera.
+ 4. Banco y C.I.G. dependen del maestro de proveedores (OCRD).
+ 5. Tipos de documento estándar:
+    - 18 = Factura proveedor
+    - 19 = Nota crédito proveedor
+ 6. Parámetro:
+    [%0] = Fecha corte (opcional, DD/MM/YYYY)
+ 7. Compatible con:
+    ✔ Query Manager
+    ✔ DataGrip
+    ✔ Exportación directa a CSV
+ ============================================================================= */
