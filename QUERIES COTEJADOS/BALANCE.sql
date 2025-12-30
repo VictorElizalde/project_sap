@@ -1,68 +1,82 @@
-/* ============================================================================================
- BALANCE DE SITUACIÓN – SAP BUSINESS ONE (HANA)
- Ejercicio: parametrizable (ej. 2025)
- Periodo: acumulado anual
- Empresa: depende de la base de datos activa
+/* ============================================================
+   BALANCE DE SITUACIÓN – BASE CONTABLE REAL
+   Sistema : SAP Business One sobre SAP HANA
+   Fuente  : Movimientos contables (JDT1)
+   Autor   : Query base reutilizable
+   ============================================================
 
- CONSIDERACIONES IMPORTANTES (LEER):
- 1) SAP B1 NO guarda el Balance “maquetado” por epígrafes oficiales.
- 2) El balance se obtiene SIEMPRE desde movimientos contables (JDT1).
- 3) La clasificación ACTIVO / PASIVO / PATRIMONIO depende del:
-    - Grupo de cuenta (OACT.GroupMask)
-    - O del rango de cuentas contables (PGC).
- 4) Este query devuelve el SALDO por cuenta y año.
- 5) El agrupamiento en epígrafes (Inmovilizado, Existencias, etc.)
-    se hace:
-      a) en Excel
-      b) en Crystal
-      c) o con una vista adicional de mapeo contable
-============================================================================================ */
+   CONSIDERACIONES IMPORTANTES:
+   1) SAP B1 NO guarda el balance “maquetado” por epígrafes.
+   2) El balance SIEMPRE se obtiene desde JDT1.
+   3) La clasificación ACTIVO / PASIVO / PATRIMONIO NETO
+      depende de OACT.GroupMask o del rango de cuentas.
+   4) Este query devuelve el SALDO por cuenta y ejercicio.
+   5) El agrupamiento en epígrafes (Inmovilizado, Existencias,
+      Clientes, etc.) se realiza fuera:
+        - Excel
+        - Power BI
+        - Crystal Reports
+        - o una tabla/vista de mapeo contable.
+
+   PARAMETROS:
+   [%0] = Ejercicio (ej: 2025)
+
+   LIMITACIONES:
+   - No calcula totales A/B/C
+   - No genera epígrafes oficiales
+   - No pivota ejercicios
+
+   USO RECOMENDADO:
+   ✔ Mantener este query como BASE CONTABLE
+   ✔ Construir el balance final en capa de reporting
+   ============================================================ */
 
 SELECT
-    /* Identificación contable */
-    A."AcctCode"        AS "Cuenta",
-    A."AcctName"        AS "Nombre Cuenta",
+ /* Identificación de la cuenta */
+ A."AcctCode" AS "Cuenta",
+ A."AcctName" AS "Nombre Cuenta",
 
-    /* Clasificación base */
-    A."GroupMask"       AS "Grupo Cuenta",
-    CASE A."GroupMask"
-        WHEN 1 THEN 'ACTIVO'
-        WHEN 2 THEN 'PASIVO'
-        WHEN 3 THEN 'PATRIMONIO NETO'
-        WHEN 4 THEN 'INGRESOS'
-        WHEN 5 THEN 'GASTOS'
-        ELSE 'OTROS'
-        END                 AS "Tipo Cuenta",
+ /* Clasificación contable */
+ A."GroupMask" AS "Grupo Cuenta",
+ CASE A."GroupMask"
+   WHEN 1 THEN 'ACTIVO'
+   WHEN 2 THEN 'PASIVO'
+   WHEN 3 THEN 'PATRIMONIO NETO'
+   WHEN 4 THEN 'INGRESOS'
+   WHEN 5 THEN 'GASTOS'
+   ELSE 'OTROS'
+ END AS "Tipo Cuenta",
 
-    /* Saldo acumulado del ejercicio */
-    SUM(J."Debit")      AS "Cargos",
-    SUM(J."Credit")     AS "Abonos",
-    SUM(J."Debit" - J."Credit") AS "Saldo",
+ /* Importes acumulados del ejercicio */
+ SUM(J."Debit") AS "Cargos",
+ SUM(J."Credit") AS "Abonos",
+ SUM(J."Debit" - J."Credit") AS "Saldo",
 
-    /* Ejercicio */
-    YEAR(J."RefDate")   AS "Ejercicio"
+ /* Ejercicio contable */
+ YEAR(J."RefDate") AS "Ejercicio"
 
 FROM "JDT1" J
-    INNER JOIN "OACT" A
-ON J."Account" = A."AcctCode"
+INNER JOIN "OACT" A
+  ON J."Account" = A."AcctCode"
 
 WHERE
-    /* Rango de fechas del ejercicio */
-    J."RefDate" >= DATE '2025-01-01'
-  AND J."RefDate" <  DATE '2026-01-01'
+ /* Ejercicio parametrizable */
+ YEAR(J."RefDate") = TO_INTEGER('[%0]')
 
-    /* Solo cuentas de balance (excluye PyG si se desea) */
-  AND A."GroupMask" IN (1,2,3)
+ /* Solo cuentas de balance */
+ AND A."GroupMask" IN (1,2,3)
 
 GROUP BY
-    A."AcctCode",
-    A."AcctName",
-    A."GroupMask",
-    YEAR(J."RefDate")
+ A."AcctCode",
+ A."AcctName",
+ A."GroupMask",
+ YEAR(J."RefDate")
 
 ORDER BY
-    A."GroupMask",
-    A."AcctCode";
+ A."GroupMask",
+ A."AcctCode";
+
+
 
 /* ============================================================================================
  NOTAS FINALES Y LIMITACIONES
