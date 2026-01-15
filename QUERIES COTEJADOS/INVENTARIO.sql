@@ -1,112 +1,73 @@
-/* =====================================================================
- QUERY: INVENTARIO (Stock por fecha)
- SISTEMA: SAP Business One sobre HANA
-
- PARÁMETROS:
- :P_FECHA_CONSULTA --> Fecha de corte del inventario
-
- NOTAS GENERALES:
- - El stock histórico se calcula SIEMPRE desde OINM.
- - OnHand / OnOrder / IsCommited son valores actuales (limitación SAP).
- - MARCA / SUBFAM / SERIE se asumen como UDFs en OITM.
- ===================================================================== */
-
 SELECT
-/* ============================
- CLASIFICACIÓN ARTÍCULO
- ============================ */
- I."U_MARCA"      AS "MARCA",
- M."Name"         AS "NOMBRE MARCA",
+    -- Grupo / Familia
+    G."ItmsGrpCod"                    AS "GRUPO",
+    G."ItmsGrpNam"                    AS "NOMBRE GRUPO",
 
- I."ItmsGrpCod"   AS "FAMILIA",
- G."ItmsGrpNam"   AS "NOMBRE FAMILIA",
+    -- Artículo
+    I."ItemCode"                      AS "ARTICULO",
+    I."ItemName"                      AS "DESCRIPCION",
 
- I."U_SUBFAM"     AS "SUBFAM",
- SF."Name"        AS "NOMBRE SUBFAMILIA",
+    -- Depósito
+    W."WhsCode"                       AS "DEPOSITO",
 
- I."U_SERIE"      AS "SERIE",
- SE."Name"        AS "NOMBRE SERIE",
+    -- Stock
+    W."OnHand"                        AS "CANTIDAD",
 
-/* ============================
- ARTÍCULO
- ============================ */
- I."ItemCode"     AS "ARTICULO",
- I."ItemName"     AS "DESCRIPCION",
+    -- Comprometido (pedidos cliente)
+    W."IsCommited"                   AS "COMPROMETIDO",
 
-/* ============================
- DEPÓSITO / STOCK
- ============================ */
- W."WhsCode"      AS "DEPOSITO",
+    -- Pendiente de recibir
+    W."OnOrder"                      AS "PT.RECIBIR",
 
- SUM(IT."InQty" - IT."OutQty") AS "CANTIDAD",
+    -- Disponible futuro
+    (W."OnHand" - W."IsCommited" + W."OnOrder") AS "DISPON.FUTURO",
 
-/* ============================
- VALORES ECONÓMICOS
- ============================ */
- I."AvgPrice" AS "PRECIO",
+    -- Entregas abiertas
+    IFNULL(E."ENTREGAS", 0)           AS "ENTREGAS",
 
- SUM(IT."InQty" - IT."OutQty") * I."AvgPrice" AS "IMPORTE",
+    -- Antigüedad
+    CASE
+        WHEN DAYS_BETWEEN(M."UltEntrada", CURRENT_DATE) <= 30 THEN '0-30'
+        WHEN DAYS_BETWEEN(M."UltEntrada", CURRENT_DATE) <= 60 THEN '31-60'
+        WHEN DAYS_BETWEEN(M."UltEntrada", CURRENT_DATE) <= 90 THEN '61-90'
+        ELSE '+90'
+        END                               AS "ANTIGÜEDAD",
 
-/* ============================
- DISPONIBILIDAD (ACTUAL)
- ============================ */
- I."IsCommited" AS "RESERVADO",
- I."OnOrder"    AS "PT.RECIBIR",
- I."OnHand" - I."IsCommited" + I."OnOrder" AS "DISPON.FUTURO",
+    -- Fecha última entrada
+    M."UltEntrada"                   AS "FECHA ULT.ENTRADA"
 
-/* ============================
- ALBARANES (NO ESTÁNDAR)
- ============================ */
- 0 AS "ALBS.PTS.",
- 0 AS "ALBS.CONF.",
+FROM "OITM" I
+         JOIN "OITW" W ON I."ItemCode" = W."ItemCode"
+         JOIN "OITB" G ON I."ItmsGrpCod" = G."ItmsGrpCod"
 
-/* ============================
- PROVEEDOR
- ============================ */
- I."CardCode"     AS "PROV.",
- BP."CardName"    AS "NOMBRE",
- I."SuppCatNum"  AS "REF.PROVEEDOR"
+-- Última entrada por artículo y almacén
+         LEFT JOIN (
+    SELECT
+        "ItemCode",
+        "Warehouse",
+        MAX("DocDate") AS "UltEntrada"
+    FROM "OINM"
+    WHERE "InQty" > 0
+    GROUP BY "ItemCode", "Warehouse"
+) M ON I."ItemCode" = M."ItemCode"
+    AND W."WhsCode" = M."Warehouse"
 
-FROM "OINM" IT
-INNER JOIN "OITM" I
- ON IT."ItemCode" = I."ItemCode"
-
-INNER JOIN "OWHS" W
- ON IT."WhsCode" = W."WhsCode"
-
-LEFT JOIN "OITB" G
- ON I."ItmsGrpCod" = G."ItmsGrpCod"
-
-/* ======= UDFs / tablas auxiliares (AJUSTAR A TU SISTEMA) ======= */
-LEFT JOIN "@MARCAS"  M  ON I."U_MARCA"  = M."Code"
-LEFT JOIN "@SUBFAM"  SF ON I."U_SUBFAM" = SF."Code"
-LEFT JOIN "@SERIES"  SE ON I."U_SERIE"  = SE."Code"
-
-LEFT JOIN "OCRD" BP
- ON I."CardCode" = BP."CardCode"
+-- Entregas abiertas
+         LEFT JOIN (
+    SELECT
+        "ItemCode",
+        SUM("OpenQty") AS "ENTREGAS"
+    FROM "DLN1"
+    WHERE "LineStatus" = 'O'
+    GROUP BY "ItemCode"
+) E ON I."ItemCode" = E."ItemCode"
 
 WHERE
- IT."DocDate" <= :P_FECHA_CONSULTA
-
-GROUP BY
- I."U_MARCA", M."Name",
- I."ItmsGrpCod", G."ItmsGrpNam",
- I."U_SUBFAM", SF."Name",
- I."U_SERIE", SE."Name",
- I."ItemCode", I."ItemName",
- W."WhsCode",
- I."AvgPrice",
- I."OnHand", I."IsCommited", I."OnOrder",
- I."CardCode", BP."CardName",
- I."SuppCatNum"
+    (W."OnHand" <> 0
+        OR W."IsCommited" <> 0
+        OR W."OnOrder" <> 0)
 
 ORDER BY
- I."ItemCode",
- W."WhsCode";
-
-/* =====================================================================
- CONSIDERACIONES FINALES IMPORTANTES
- - Stock a fecha: correcto vía OINM
- - Reservado / A recibir: solo estado actual SAP
- - ALBS.* se dejan en 0 por no ser estándar
- ===================================================================== */
+    G."ItmsGrpNam",
+    I."ItemCode",
+    W."WhsCode";
