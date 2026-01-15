@@ -6,7 +6,6 @@
  - Incluye datos comerciales, artículo, familia, marca, costes y margen
  - Algunas columnas dependen de UDFs (ver notas finales)
 ============================================================================= */
-
 SELECT
  C."CardCode" AS "Cliente",
  C."CardName" AS "Nombre Cliente",
@@ -14,9 +13,8 @@ SELECT
  /* Dirección entrega (SAP estándar seguro) */
  V."Address" AS "DIRECCION ENTREGA DE CLIENTE",
 
- C."GroupCode" AS "Cl.Agrup",
- CG."GroupName" AS "Ramo",
- C."IndustryC" AS "Actividad",
+    M."FirmName"                                AS "Marca",
+    G."ItmsGrpNam"                              AS "Familia",
 
  M."FirmName" AS "Marca",
  G."ItmsGrpNam" AS "Familia",
@@ -44,7 +42,8 @@ SELECT
    ELSE 0
  END AS "% Margen",
 
- SH."TrnspName" AS "Forma de envio",
+    ''                                          AS "Mot.Abono",
+    ''                                          AS "Desc. Abono",
 
  '' AS "Mot.Abono",     -- no estándar
  '' AS "Desc. Abono",   -- no estándar
@@ -56,37 +55,14 @@ FROM "OINV" V
 INNER JOIN "INV1" L
   ON V."DocEntry" = L."DocEntry"
 
-INNER JOIN "OCRD" C
-  ON V."CardCode" = C."CardCode"
-
-LEFT JOIN "OCRG" CG
-  ON C."GroupCode" = CG."GroupCode"
-
-LEFT JOIN "OITM" I
-  ON L."ItemCode" = I."ItemCode"
-
-LEFT JOIN "OITB" G
-  ON I."ItmsGrpCod" = G."ItmsGrpCod"
-
-LEFT JOIN "OMRC" M
-  ON I."FirmCode" = M."FirmCode"
-
-LEFT JOIN "OSLP" S
-  ON V."SlpCode" = S."SlpCode"
-
-LEFT JOIN "OSHP" SH
-  ON V."TrnspCode" = SH."TrnspCode"
-
-LEFT JOIN "OCRD" P
-  ON I."CardCode" = P."CardCode"   -- proveedor preferente del artículo
-
 WHERE
- V."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
+    V."DocDate" BETWEEN DATE '2025-01-01' AND DATE '2026-01-01'
 
 ORDER BY
- V."DocDate",
- V."DocNum",
- L."LineNum";
+    V."DocDate",
+    V."DocNum",
+    L."LineNum";
+
 
 /* =============================================================================
  NOTAS IMPORTANTES

@@ -19,44 +19,48 @@ SELECT
  A."AcctCode" AS "Cuenta",
  A."AcctName" AS "Nombre Cuenta",
 
-/* ================= SALDO DE APERTURA ================= */
-COALESCE((
-    SELECT SUM(J0."Debit" - J0."Credit")
-    FROM "JDT1" J0
-    WHERE J0."Account" = A."AcctCode"
-    AND J0."RefDate" < DATE '2025-01-01'
-), 0) AS "Saldo Apertura",
+    /* ================= SALDO APERTURA ================= */
+    COALESCE((
+                 SELECT SUM(J0."Debit" - J0."Credit")
+                 FROM "JDT1" J0
+                          JOIN "OJDT" H0
+                               ON J0."TransId" = H0."TransId"
+                 WHERE J0."Account" = A."AcctCode"
+                   AND H0."RefDate" < DATE '2025-01-01'
+             ), 0)                                     AS "Saldo Apertura",
 
-/* ================= MOVIMIENTOS DEL EJERCICIO ================= */
-SUM(
-    CASE
-        WHEN J."RefDate" >= DATE '2025-01-01'
-         AND J."RefDate" <  DATE '2026-01-01'
-        THEN J."Debit"
-        ELSE 0
-    END
-) AS "Cargos",
+    /* ================= MOVIMIENTOS DEL PERIODO ================= */
+    SUM(
+            CASE
+                WHEN H."RefDate" >= DATE '2025-01-01'
+                    AND H."RefDate" <  DATE '2026-01-01'
+                    THEN J."Debit"
+                ELSE 0
+                END
+    )                                         AS "Cargos",
 
-SUM(
-    CASE
-        WHEN J."RefDate" >= DATE '2025-01-01'
-         AND J."RefDate" <  DATE '2026-01-01'
-        THEN J."Credit"
-        ELSE 0
-    END
-) AS "Abonos",
+    SUM(
+            CASE
+                WHEN H."RefDate" >= DATE '2025-01-01'
+                    AND H."RefDate" <  DATE '2026-01-01'
+                    THEN J."Credit"
+                ELSE 0
+                END
+    )                                         AS "Abonos",
 
-/* ================= MOVIMIENTOS ACUMULADOS ================= */
-SUM(J."Debit")  AS "Cargos Acumulados",
-SUM(J."Credit") AS "Abonos Acumulados",
+    /* ================= ACUMULADOS ================= */
+    SUM(J."Debit")                            AS "Cargos Acumulados",
+    SUM(J."Credit")                           AS "Abonos Acumulados",
 
 /* ================= SALDO FINAL ================= */
 SUM(J."Debit" - J."Credit") AS "Saldo Final"
 
 FROM "OACT" A
-LEFT JOIN "JDT1" J
-    ON J."Account" = A."AcctCode"
-   AND J."RefDate" < DATE '2026-01-01'
+         LEFT JOIN "JDT1" J
+                   ON J."Account" = A."AcctCode"
+         LEFT JOIN "OJDT" H
+                   ON J."TransId" = H."TransId"
+                       AND H."RefDate" < DATE '2026-01-01'
 
 GROUP BY
  A."AcctCode",

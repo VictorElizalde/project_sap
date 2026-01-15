@@ -21,63 +21,69 @@
  ===================================================================================== */
 
 SELECT
- /* ================= CLIENTE AGRUPADO ================= */
- G."GroupName" AS "CLI-AG",
- G."GroupName" AS "Nombre_Cliente_Agrupado",
+    /* CLI-AG */
+    G."GroupCode"                                AS "CLI-AG",
 
- /* ================= FACTURA ================= */
- TO_VARCHAR(V."DocDate", 'DD/MM/YYYY') AS "Fec.Fra.",
- '' AS "Se", -- No estándar en SAP
- V."DocNum" AS "Factur",
+    /* Nombre Cliente Agrupado */
+    G."GroupName"                                AS "Nombre_Cliente_Agrupado",
 
- /* ================= CLIENTE ================= */
- C."CardCode" AS "CodCli",
- C."CardName" AS "Nombre_Cliente",
+    /* Fecha Factura */
+    TO_VARCHAR(V."DocDate", 'DD/MM/YYYY')        AS "Fec.Fra.",
 
- /* ================= DIRECCIÓN ENVÍO ================= */
- COALESCE(A."Address", '') AS "CodD",
- COALESCE(A."Street", '') AS "Nombre_Dir_Envio",
+    /* Se (no estándar) */
+    ''                                           AS "Se",
 
- /* ================= IMPORTE ================= */
- SUM(L."LineTotal") AS "Imp.Neto",
+    /* Número de factura */
+    V."DocNum"                                   AS "Factur",
 
- /* ================= RAMO ================= */
- G."GroupName" AS "Nombre_Ramo",
+    /* Código cliente */
+    C."CardCode"                                 AS "CodCli",
 
- /* ================= REPETICIÓN CSV ================= */
- C."CardCode" AS "CodCli_Rep"
+    /* Nombre cliente */
+    C."CardName"                                 AS "Nombre_Cliente",
+
+    /* Código dirección envío */
+    COALESCE(V."ShipToCode", '')                 AS "CodD",
+
+    /* Dirección de envío (texto completo) */
+    COALESCE(V."Address2", '')                   AS "Nombre_Dir_Envio",
+
+    /* Importe neto */
+    SUM(L."LineTotal")                           AS "Imp.Neto",
+
+    /* Nombre ramo */
+    G."GroupName"                                AS "Nombre_Ramo",
+
+    /* CodCli repetido */
+    C."CardCode"                                 AS "CodCli"
 
 FROM "OINV" V
-INNER JOIN "INV1" L
- ON V."DocEntry" = L."DocEntry"
+         JOIN "INV1" L
+              ON V."DocEntry" = L."DocEntry"
 
-INNER JOIN "OCRD" C
- ON V."CardCode" = C."CardCode"
+         JOIN "OCRD" C
+              ON V."CardCode" = C."CardCode"
 
-LEFT JOIN "OCRG" G
- ON C."GroupCode" = G."GroupCode"
-
-LEFT JOIN "INV12" A
- ON V."DocEntry" = A."DocEntry"
- AND A."AddrType" = 'S'
+         LEFT JOIN "OCRG" G
+                   ON C."GroupCode" = G."GroupCode"
 
 WHERE
- V."CANCELED" = 'N'
-AND V."DocDate" BETWEEN :FechaInicio AND :FechaFin
-AND G."GroupName" = 'CATALUNYA'
+    V."DocDate" BETWEEN DATE '2025-02-01' AND DATE '2026-01-01'
+  AND G."GroupName" = 'CATALONIA'
 
 GROUP BY
- G."GroupName",
- V."DocDate",
- V."DocNum",
- C."CardCode",
- C."CardName",
- A."Address",
- A."Street"
+    G."GroupCode",
+    G."GroupName",
+    V."DocDate",
+    V."DocNum",
+    C."CardCode",
+    C."CardName",
+    V."ShipToCode",
+    V."Address2"
 
 ORDER BY
- C."CardName",
- V."DocNum";
+    C."CardName",
+    V."DocNum";
 
 /* =====================================================================================
  NOTAS FINALES:

@@ -12,73 +12,92 @@
  ============================================================================= */
 
 SELECT
-CASE A."FinanseAct"
-WHEN 'INC' THEN '1. Importe neto de la cifra de negocios'
-WHEN 'COS' THEN '4. Aprovisionamientos'
-WHEN 'OEX' THEN '7. Otros gastos de explotación'
-WHEN 'SAL' THEN '6. Gastos de personal'
-WHEN 'FIN' THEN '13. Gastos financieros'
-ELSE 'OTROS'
-END AS "Concepto",
+    CASE
+        WHEN A."AcctCode" BETWEEN '70000000' AND '79999999'
+            THEN '1. Importe neto de la cifra de negocios'
+        WHEN A."AcctCode" BETWEEN '60000000' AND '60999999'
+            THEN '4. Aprovisionamientos'
+        WHEN A."AcctCode" BETWEEN '62000000' AND '62999999'
+            THEN '6. Gastos de personal'
+        WHEN A."AcctCode" BETWEEN '63000000' AND '63999999'
+            THEN '7. Otros gastos de explotación'
+        WHEN A."AcctCode" BETWEEN '66000000' AND '66999999'
+            THEN '13. Gastos financieros'
+        ELSE 'OTROS'
+        END AS "Concepto",
 
-/* ===================== AÑO 2025 ===================== */
-SUM(
-CASE
-WHEN YEAR(J."RefDate") = 2025
-THEN COALESCE(J."Debit",0) - COALESCE(J."Credit",0)
-ELSE 0
-END
-) AS "2025",
+    /* ===================== 2025 ===================== */
+    SUM(
+            CASE
+                WHEN YEAR(T."RefDate") = 2025
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2025",
 
-/* ===================== AÑO 2024 ===================== */
-SUM(
-CASE
-WHEN YEAR(J."RefDate") = 2024
-THEN COALESCE(J."Debit",0) - COALESCE(J."Credit",0)
-ELSE 0
-END
-) AS "2024",
+    /* ===================== 2024 ===================== */
+    SUM(
+            CASE
+                WHEN YEAR(T."RefDate") = 2024
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2024",
 
-/* ===================== AÑO 2023 ===================== */
-SUM(
-CASE
-WHEN YEAR(J."RefDate") = 2023
-THEN COALESCE(J."Debit",0) - COALESCE(J."Credit",0)
-ELSE 0
-END
-) AS "2023",
+    /* ===================== 2023 ===================== */
+    SUM(
+            CASE
+                WHEN YEAR(T."RefDate") = 2023
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2023",
 
-/* ===================== AÑO 2022 ===================== */
-SUM(
-CASE
-WHEN YEAR(J."RefDate") = 2022
-THEN COALESCE(J."Debit",0) - COALESCE(J."Credit",0)
-ELSE 0
-END
-) AS "2022",
+    /* ===================== 2022 ===================== */
+    SUM(
+            CASE
+                WHEN YEAR(T."RefDate") = 2022
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2022",
 
-/* ===================== AÑO 2021 ===================== */
-SUM(
-CASE
-WHEN YEAR(J."RefDate") = 2021
-THEN COALESCE(J."Debit",0) - COALESCE(J."Credit",0)
-ELSE 0
-END
-) AS "2021"
+    /* ===================== 2021 ===================== */
+    SUM(
+            CASE
+                WHEN YEAR(T."RefDate") = 2021
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2021"
 
-FROM "OACT" A
-LEFT JOIN "JDT1" J
-ON J."Account" = A."AcctCode"
-AND YEAR(J."RefDate") BETWEEN 2021 AND 2025
+FROM "OJDT" T
+         JOIN "JDT1" J
+              ON T."TransId" = J."TransId"
+         JOIN "OACT" A
+              ON J."Account" = A."AcctCode"
 
 WHERE
-A."FinanseAct" IS NOT NULL
+    YEAR(T."RefDate") BETWEEN 2021 AND 2025
+  AND A."GroupMask" = 4        -- 🔑 SOLO CUENTAS DE PÉRDIDAS Y GANANCIAS
 
 GROUP BY
-A."FinanseAct"
+    CASE
+    WHEN A."AcctCode" BETWEEN '70000000' AND '79999999'
+    THEN '1. Importe neto de la cifra de negocios'
+    WHEN A."AcctCode" BETWEEN '60000000' AND '60999999'
+    THEN '4. Aprovisionamientos'
+    WHEN A."AcctCode" BETWEEN '62000000' AND '62999999'
+    THEN '6. Gastos de personal'
+    WHEN A."AcctCode" BETWEEN '63000000' AND '63999999'
+    THEN '7. Otros gastos de explotación'
+    WHEN A."AcctCode" BETWEEN '66000000' AND '66999999'
+    THEN '13. Gastos financieros'
+    ELSE 'OTROS'
+END
 
 ORDER BY
-A."FinanseAct";
+    "Concepto";
 
 /* =============================================================================
  NOTAS FINALES:

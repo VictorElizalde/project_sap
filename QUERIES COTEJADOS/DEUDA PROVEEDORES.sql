@@ -9,57 +9,54 @@
  ============================================================================= */
 
 SELECT
- P."CardCode" AS "Proveedor",
- P."CardName" AS "Nombre",
+    P."CardCode"                                   AS "Proveedor",
+    P."CardName"                                   AS "Nombre",
 
- TO_VARCHAR(F."DocDueDate", 'DD/MM/YYYY') AS "Vto",
- F."DocNum" AS "Documento",
+    TO_VARCHAR(F."DocDueDate", 'DD/MM/YYYY')       AS "Vto",
+    F."DocNum"                                     AS "Documento",
 
-CASE F."ObjType"
-WHEN '18' THEN 'Factura Proveedor'
-WHEN '19' THEN 'Nota Crédito Proveedor'
-ELSE 'Documento'
-END AS "Tipo Doc.",
+    CASE F."ObjType"
+        WHEN '18' THEN 'Factura Proveedor'
+        WHEN '19' THEN 'Nota Crédito Proveedor'
+        ELSE 'Documento'
+        END                                            AS "Tipo Doc.",
 
- TO_VARCHAR(F."DocDate", 'DD/MM/YYYY') AS "Fecha",
+    TO_VARCHAR(F."DocDate", 'DD/MM/YYYY')          AS "Fecha",
 
-COALESCE(F."NumAtCard", '') AS "S/Factura",
+    COALESCE(F."NumAtCard", '')                    AS "S/Factura",
 
- F."DocStatus" AS "Est.",
+    F."DocStatus"                                  AS "Est.",
 
- F."DocEntry" AS "Id.",
+    F."DocEntry"                                   AS "Id.",
 
-COALESCE(F."PeyMethod", '') AS "T.P.",
+    COALESCE(F."PeyMethod", '')                    AS "T.P.",
 
-COALESCE(P."BankCode", '') AS "Banco",
+    COALESCE(P."BankCode", '')                     AS "Banco",
 
-COALESCE(P."SWIFT", '') AS "C.I.G.",
+    ''                                             AS "C.I.G.",
 
- (F."DocTotal" - F."PaidToDate") AS "Importe",
+    (F."DocTotal" - F."PaidToDate")                AS "Importe",
 
-CASE
-WHEN COALESCE(F."DocTotalFC", 0) <> 0
-THEN (F."DocTotalFC" - F."PaidFC")
-ELSE 0
-END AS "Importe Div.",
+    CASE
+        WHEN F."DocTotalFC" <> 0
+            THEN (F."DocTotalFC" - F."PaidFC")
+        ELSE 0
+        END                                            AS "Importe Div.",
 
- F."DocCur" AS "DIV"
+    F."DocCur"                                     AS "DIV"
 
 FROM "OPCH" F
-INNER JOIN "OCRD" P
-ON F."CardCode" = P."CardCode"
+         JOIN "OCRD" P
+              ON F."CardCode" = P."CardCode"
 
 WHERE
- F."Canceled" = 'N'                         -- Excluir cancelados
-AND F."DocTotal" > F."PaidToDate"           -- Con saldo pendiente
-AND (
- '[%0]' = '' 
- OR F."DocDate" <= TO_DATE('[%0]', 'DD/MM/YYYY')
- )
+    F."DocStatus" = 'O'                 -- SOLO documentos abiertos
+  AND F."DocTotal" > F."PaidToDate"      -- Con saldo pendiente
+  AND F."DocDate" <= DATE '2025-01-31'   -- Ajusta la fecha aquí
 
 ORDER BY
- P."CardName",
- F."DocDueDate";
+    P."CardName",
+    F."DocDueDate";
 
 /* =============================================================================
  NOTAS Y CONSIDERACIONES IMPORTANTES
