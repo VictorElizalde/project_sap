@@ -57,8 +57,9 @@ LEFT JOIN "CRD1" A  ON C."CardCode" = A."CardCode"
 LEFT JOIN "OITM" I  ON L."ItemCode" = I."ItemCode"
 LEFT JOIN "OSHP" T  ON D."TrnspCode" = T."TrnspCode"
 
+-- For one or multiple albaranes: LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%Albaran%]' || ',') > 0
+
 WHERE
-  /*CAST(D."DocNum" AS VARCHAR) = '[%0]'*/
   C."CardCode" = '[%Cliente%]'
   AND (
     '[%Albaran%]' = ''
