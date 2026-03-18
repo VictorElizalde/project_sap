@@ -13,16 +13,31 @@ SELECT
     -- Depósito
     W."WhsCode"                                 AS "DEPOSITO",
 
-    -- Stock
-    W."OnHand"                                  AS "CANTIDAD",
+    -- Disponible al cierre de la fecha indicada
+    COALESCE(
+        (SELECT SUM("InQty" - "OutQty")
+         FROM "OINM" m
+         WHERE m."ItemCode" = I."ItemCode"
+           AND m."Warehouse" = W."WhsCode"
+           AND m."DocDate"  = '[%0%]')
+    , 0)                                        - W."IsCommited" + W."OnOrder" AS "DISPONIBLE",
 
-    -- Comprometido
+    -- Stock al cierre de la fecha indicada
+    COALESCE(
+        (SELECT SUM("InQty" - "OutQty")
+         FROM "OINM" m
+         WHERE m."ItemCode" = I."ItemCode"
+           AND m."Warehouse" = W."WhsCode"
+           AND m."DocDate"  = '[%0%]')
+    , 0)                                        AS "CANTIDAD",
+
+    -- Comprometido (valor actual)
     W."IsCommited"                              AS "COMPROMETIDO",
 
-    -- Pendiente de recibir
+    -- Pendiente de recibir (valor actual)
     W."OnOrder"                                 AS "PT.RECIBIR",
 
-    -- Disponible futuro
+    -- Disponible futuro (valor actual)
     (W."OnHand" - W."IsCommited" + W."OnOrder") AS "DISPON.FUTURO",
 
     -- Entregas abiertas
@@ -73,21 +88,20 @@ WHERE
      OR W."IsCommited" <> 0
      OR W."OnOrder"    <> 0)
 
-    -- Filtro por rango de fechas aplicado sobre columna DATE real de OINM
+    -- Filtro por fecha aplicada sobre columna DATE real de OINM
+    -- NOTA: SAP B1 mostrará automáticamente "Menor o igual" (comportamiento estándar)
     AND EXISTS (
         SELECT 1
         FROM "OINM" NM
         WHERE NM."ItemCode"  = I."ItemCode"
           AND NM."Warehouse" = W."WhsCode"
           AND NM."InQty"     > 0
-          AND NM."DocDate"   >= [%0]
-          AND NM."DocDate"   <= [%1]
+          AND NM."DocDate"   = '[%0%]'
     )
 
 ORDER BY
     I."U_GEST_Fam1",
     I."U_GEST_Fam2",
-    I."U_GEST_Fam3",
     MRC."FirmName",
     I."ItemCode",
     W."WhsCode";
