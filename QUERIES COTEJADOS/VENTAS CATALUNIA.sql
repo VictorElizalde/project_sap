@@ -5,6 +5,9 @@ SELECT
     -- Nombre Cliente Agrupado
     G."GroupName"                                AS "Nombre Cliente Agrupado",
 
+    -- Central de Compras
+    CC."Name"                                    AS "Central de Compras",
+
     -- Fecha Factura
     TO_VARCHAR(V."DocDate", 'DD/MM/YYYY')        AS "Fecha Factura",
 
@@ -36,14 +39,17 @@ FROM "OINV" V
          LEFT JOIN "OCRG" G
                    ON C."GroupCode" = G."GroupCode"
 
+         LEFT JOIN "@GEI_CENTCOMP" CC
+                   ON C."U_GEI_CentC" = CC."Code"
+
 WHERE
     V."DocDate" BETWEEN '[%DateFrom%]' AND '[%DateTo%]'
-    -- TODO: Reemplaza U_CentralCompras con el nombre correcto del UDF
-    -- AND COALESCE(C."U_CentralCompras", '') IN ('CATALONIA HOTELS', 'ASOCIADO QUANTUM')
+    AND CC."Name" IN ('CATALONIA HOTELS', 'ASOCIADO QUANTUM')
 
 GROUP BY
     G."GroupCode",
     G."GroupName",
+    CC."Name",
     V."DocDate",
     V."DocNum",
     C."CardCode",
