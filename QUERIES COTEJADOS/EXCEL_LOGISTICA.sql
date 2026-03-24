@@ -10,7 +10,7 @@ SELECT
 
   -- Destinatario
   C."CardCode"                    AS "Código destinatario",
-  C."CardName"                    AS "Nombre destinatario",
+  A."Address"                    AS "Nombre destinatario",
 
   A."Street"                      AS "Dirección destinatario",
   A."ZipCode"                     AS "C.Postal destinatario",
@@ -18,10 +18,10 @@ SELECT
   A."County"                      AS "Provincia destinatario",
   A."Country"                     AS "País destinatario",
 
-  C."LicTradNum"                  AS "CIF destinatario",
-  C."Phone1"                      AS "Teléfono destinatario",
+  A."LicTradNum"                  AS "CIF destinatario",
+  A."U_Phone1"                      AS "Teléfono destinatario",
 
-  D."Comments"                    AS "Obs.destinatario",
+  C."Free_Text"                    AS "Obs.destinatario",
 
   -- Transporte
   D."TotalExpns"                  AS "Portes",
@@ -37,7 +37,7 @@ SELECT
   I."SWeight1" * L."Quantity"    AS "Peso",
 
   -- Contacto
-  C."E_Mail"                      AS "e-mail",
+  COALESCE(A."U_GEI_Mail", C."E_Mail")  AS "e-mail",
 
   -- Referencias
   O."NumAtCard"                   AS "Referencia Pedido",
@@ -57,15 +57,21 @@ LEFT JOIN "CRD1" A  ON C."CardCode" = A."CardCode"
 LEFT JOIN "OITM" I  ON L."ItemCode" = I."ItemCode"
 LEFT JOIN "OSHP" T  ON D."TrnspCode" = T."TrnspCode"
 
--- For one or multiple albaranes: LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%Albaran%]' || ',') > 0
-
 WHERE
-  C."CardCode" = '[%Cliente%]'
+  D."DocStatus" = 'O'
   AND (
-    '[%Albaran%]' = ''
-    OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%Albaran%]' || ',') > 0
-)
+    C."CardCode" = '[%0]'
+    OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%1]' || ',') > 0
+  )
 
 ORDER BY
   D."DocNum",
   L."LineNum";
+
+-- =============================================================================
+-- NOTAS:
+-- - Parámetro [%0] = Código de cliente (opcional)
+-- - Parámetro [%1] = Números de albarán separados por comas (ej: 100,101,102) - opcional
+-- - Solo muestra albaranes con estado activo (DocStatus = 'O')
+-- - Compatible con Query Manager / CSV / Excel
+-- =============================================================================
