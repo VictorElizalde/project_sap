@@ -21,7 +21,7 @@ SELECT
   A."LicTradNum"                  AS "CIF destinatario",
   A."U_Phone1"                      AS "Teléfono destinatario",
 
-  C."Free_Text"                    AS "Obs.destinatario",
+  D."PickRmrk"                    AS "Obs.destinatario",
 
   -- Transporte
   D."TotalExpns"                  AS "Portes",
@@ -62,6 +62,9 @@ WHERE
   AND (
     C."CardCode" = '[%0]'
     OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%1]' || ',') > 0
+    OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%2]' || ',') > 0
+    OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%3]' || ',') > 0
+    OR LOCATE(',' || CAST(D."DocNum" AS VARCHAR) || ',', ',' || '[%4]' || ',') > 0
   )
 
 ORDER BY
@@ -70,8 +73,13 @@ ORDER BY
 
 -- =============================================================================
 -- NOTAS:
--- - Parámetro [%0] = Código de cliente (opcional)
--- - Parámetro [%1] = Números de albarán separados por comas (ej: 100,101,102) - opcional
+-- - Parámetro [%0] = Código de cliente (obligatorio)
+-- - Parámetro [%1] = Albarán 1 (ej: 100) - opcional
+-- - Parámetro [%2] = Albarán 2 (ej: 101) - opcional
+-- - Parámetro [%3] = Albarán 3 (ej: 102) - opcional
+-- - Parámetro [%4] = Albarán 4 (ej: 103) - opcional
+-- - Puede usar hasta 4 albaranes diferentes a la vez (límite de caracteres SAP B1)
+-- - Si no especifica albaranes, muestra TODOS los del cliente
 -- - Solo muestra albaranes con estado activo (DocStatus = 'O')
 -- - Compatible con Query Manager / CSV / Excel
 -- =============================================================================
