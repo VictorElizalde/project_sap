@@ -70,16 +70,3 @@ WHERE
 ORDER BY
   D."DocNum",
   L."LineNum";
-
--- =============================================================================
--- NOTAS:
--- - Parámetro [%0] = Código de cliente (obligatorio)
--- - Parámetro [%1] = Albarán 1 (ej: 100) - opcional
--- - Parámetro [%2] = Albarán 2 (ej: 101) - opcional
--- - Parámetro [%3] = Albarán 3 (ej: 102) - opcional
--- - Parámetro [%4] = Albarán 4 (ej: 103) - opcional
--- - Puede usar hasta 4 albaranes diferentes a la vez (límite de caracteres SAP B1)
--- - Si no especifica albaranes, muestra TODOS los del cliente
--- - Solo muestra albaranes con estado activo (DocStatus = 'O')
--- - Compatible con Query Manager / CSV / Excel
--- =============================================================================
