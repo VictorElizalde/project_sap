@@ -16,28 +16,24 @@ SELECT
     D."CardName"                                 AS "Nombre destinatario",
 
     -- DIRECCIÓN
-    COALESCE(D."Address2", D."Address")          AS "Dirección destinatario",
-    C."ZipCode"                                  AS "C.Postal destinatario",
-    C."City"                                     AS "Población destinatario",
-    C."County"                                   AS "Provincia destinatario",
-    C."Country"                                  AS "País destinatario",
+    A."Street"                                   AS "Dirección destinatario",
+    A."ZipCode"                                  AS "C.Postal destinatario",
+    A."City"                                     AS "Población destinatario",
+    COALESCE(CST."Name", DL."StateS")            AS "Provincia destinatario",
+    COALESCE(CRY."Name", DL."CountryS")          AS "País destinatario",
 
     -- DATOS FISCALES
     C."LicTradNum"                               AS "CIF destinatario",
-    C."Phone1"                                   AS "Teléfono destinatario",
+    A."U_Phone1"                                 AS "Teléfono destinatario",
 
     -- OBSERVACIONES
-    D."Comments"                                 AS "Obs.destinatario",
+    A."GlblLocNum"                               AS "Obs.destinatario",
 
     -- LOGÍSTICA
-    CASE
-        WHEN UPPER(L."ItemCode") LIKE '%PORTE%' THEN L."LineTotal"
-        ELSE 0
-    END                                          AS "Portes",
+    ''                                           AS "Portes",
+    ''                                           AS "Valorado",
 
-    D."DocTotal"                                 AS "Valorado",
-
-    CAST(NULL AS NVARCHAR(50))                   AS "Enviado por",
+    T."TrnspName"                                AS "Enviado por",
     CAST(NULL AS NVARCHAR(20))                   AS "Sit.Impr.",
     CAST(NULL AS NVARCHAR(20))                   AS "Sit.Exp.",
     CAST(NULL AS NVARCHAR(20))                   AS "Sit.Conf.",
@@ -56,21 +52,21 @@ SELECT
     0                                            AS "Gtos.Fin.",
 
     -- ARTÍCULOS
-    CAST(NULL AS NVARCHAR(50))                   AS "Ramo",
-    L."ItemCode"                                 AS "Artículo",
-    L."Dscription"                               AS "Descripción",
-    L."Quantity"                                 AS "Cantidad",
-    L."Price"                                    AS "Precio",
-    L."DiscPrcnt"                                AS "Dtos.",
-    L."LineTotal"                                AS "Importe",
+    COALESCE(QG."GroupName", '')                 AS "Ramo",
+    ''                                           AS "Artículo",
+    ''                                           AS "Descripción",
+    ''                                           AS "Cantidad",
+    ''                                           AS "Precio",
+    ''                                           AS "Dtos.",
+    ''                                           AS "Importe",
 
     -- COSTES (NO EXISTEN EN ALBARÁN)
-    0                                            AS "P.Coste",
-    0                                            AS "Imp.Coste",
+    ''                                           AS "P.Coste",
+    ''                                           AS "Imp.Coste",
 
     -- PROVEEDOR / FAMILIA
-    CAST(NULL AS NVARCHAR(100))                  AS "Proveedor",
-    I."ItmsGrpCod"                               AS "Familia"
+    ''                                           AS "Proveedor",
+    ''                                           AS "Familia"
 
 FROM "ODLN" D
 JOIN "DLN1" L
@@ -83,8 +79,19 @@ LEFT JOIN "ORDR" O
 LEFT JOIN "OCRD" C
   ON D."CardCode" = C."CardCode"
 
+LEFT JOIN "CRD1" A
+  ON C."CardCode" = A."CardCode"
+ AND A."AdresType" = 'S'
+ AND A."Address" = D."ShipToCode"
+
 LEFT JOIN "OITM" I
   ON L."ItemCode" = I."ItemCode"
+
+LEFT JOIN "DLN12" DL ON D."DocEntry" = DL."DocEntry"
+LEFT JOIN "OCRY" CRY ON DL."CountryS" = CRY."Code"
+LEFT JOIN "OCST" CST ON DL."StateS" = CST."Code" AND DL."CountryS" = CST."Country"
+LEFT JOIN "OSHP" T ON D."TrnspCode" = T."TrnspCode"
+LEFT JOIN "OCQG" QG ON C."GroupCode" = QG."GroupCode"
 
 WHERE
     D."DocStatus" = 'O'
