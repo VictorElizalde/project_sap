@@ -1,9 +1,12 @@
 SELECT
- A."AcctCode" || ' ' || A."AcctName" AS "Concepto",
+ CASE WHEN GROUPING(A."AcctCode") = 1
+      THEN 'TOTAL BENEFICIO / PÉRDIDA'
+      ELSE A."AcctCode" || ' ' || A."AcctName"
+ END                                                                              AS "Concepto",
 
- SUM(J."Debit" - J."Credit") AS "ACUMULADO",
+ SUM(J."Debit" - J."Credit")                                                     AS "ACUMULADO",
 
- ROUND(SUM(J."Debit" - J."Credit") / 12, 2) AS "MEDIA",
+ ROUND(SUM(J."Debit" - J."Credit") / 12, 2)                                      AS "MEDIA",
 
  SUM(CASE WHEN MONTH(J."RefDate") = 1  THEN (J."Debit" - J."Credit") ELSE 0 END) AS "ENERO",
  SUM(CASE WHEN MONTH(J."RefDate") = 2  THEN (J."Debit" - J."Credit") ELSE 0 END) AS "FEBRERO",
@@ -22,12 +25,15 @@ FROM "JDT1" J
 INNER JOIN "OACT" A ON J."Account" = A."AcctCode"
 
 WHERE
-  J."RefDate" >= TO_DATE(YEAR('[%0]') || '-01-01', 'YYYY-MM-DD')
+  (A."AcctCode" LIKE '6%' OR A."AcctCode" LIKE '7%')
+  AND J."RefDate" >= TO_DATE(YEAR('[%0]') || '-01-01', 'YYYY-MM-DD')
   AND J."RefDate" <  ADD_YEARS(TO_DATE(YEAR('[%0]') || '-01-01', 'YYYY-MM-DD'), 1)
 
-GROUP BY
- A."AcctCode",
- A."AcctName"
+GROUP BY GROUPING SETS(
+  (A."AcctCode", A."AcctName"),
+  ()
+)
 
 ORDER BY
+ GROUPING(A."AcctCode"),
  A."AcctCode";
