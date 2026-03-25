@@ -26,11 +26,11 @@ SELECT
     COALESCE(O."NumAtCard", '')                  AS "Telefono 2",
     L."PoTrgNum"                                 AS "Doc. Aprov.",
     C."CardCode"                                 AS "Referencia Cliente",
-    COALESCE(C."E_Mail", '')                     AS "E-Mail",
-    COALESCE(B."U_GEI_Mail", C."E_Mail", '')     AS "E-Mail Facturas",
+    ''                                           AS "E-Mail",
+    ''                                           AS "E-Mail Facturas",
 
     -- FAMILIA
-    COALESCE(CAST(I."ItmsGrpCod" AS VARCHAR), '') AS "Familia"
+    '' AS "Familia"
 
 FROM "ORDR" O
 INNER JOIN "RDR1" L  ON O."DocEntry" = L."DocEntry"
