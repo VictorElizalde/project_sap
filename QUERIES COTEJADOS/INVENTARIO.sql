@@ -1,10 +1,13 @@
 SELECT
+    -- Marca
+    IFNULL(MRC."FirmName", '-')                 AS "MARCA",
+
+    -- Grupo
+    G."ItmsGrpNam"                              AS "GRUPO",
+
     -- Familias
     I."U_GEST_Fam1"                             AS "FAMILIA",
     I."U_GEST_Fam2"                             AS "SUBFAMILIA",
-
-    -- Marca
-    IFNULL(MRC."FirmName", '-')                 AS "MARCA",
 
     -- Artículo
     I."ItemCode"                                AS "ARTICULO",
@@ -19,8 +22,8 @@ SELECT
          FROM "OINM" m
          WHERE m."ItemCode" = I."ItemCode"
            AND m."Warehouse" = W."WhsCode"
-           AND m."DocDate"  = '[%0%]')
-    , 0)                                        - W."IsCommited" + W."OnOrder" AS "DISPONIBLE",
+           AND m."DocDate"  <= CASE WHEN '[%0%]' = '' THEN CURRENT_DATE ELSE CAST(SUBSTRING('[%0%]', 1, 10) AS DATE) END)
+    , 0)                                        - W."IsCommited" AS "DISPONIBLE",
 
     -- Stock al cierre de la fecha indicada
     COALESCE(
@@ -28,7 +31,7 @@ SELECT
          FROM "OINM" m
          WHERE m."ItemCode" = I."ItemCode"
            AND m."Warehouse" = W."WhsCode"
-           AND m."DocDate"  = '[%0%]')
+           AND m."DocDate"  <= CASE WHEN '[%0%]' = '' THEN CURRENT_DATE ELSE CAST(SUBSTRING('[%0%]', 1, 10) AS DATE) END)
     , 0)                                        AS "CANTIDAD",
 
     -- Comprometido (valor actual)
@@ -87,17 +90,6 @@ WHERE
     (W."OnHand"        <> 0
      OR W."IsCommited" <> 0
      OR W."OnOrder"    <> 0)
-
-    -- Filtro por fecha aplicada sobre columna DATE real de OINM
-    -- NOTA: SAP B1 mostrará automáticamente "Menor o igual" (comportamiento estándar)
-    AND EXISTS (
-        SELECT 1
-        FROM "OINM" NM
-        WHERE NM."ItemCode"  = I."ItemCode"
-          AND NM."Warehouse" = W."WhsCode"
-          AND NM."InQty"     > 0
-          AND NM."DocDate"   = '[%0%]'
-    )
 
 ORDER BY
     I."U_GEST_Fam1",
