@@ -37,8 +37,8 @@ SELECT
     -- Comprometido (valor actual)
     W."IsCommited"                              AS "COMPROMETIDO",
 
-    -- Pendiente de recibir (valor actual)
-    W."OnOrder"                                 AS "PT.RECIBIR",
+    -- Pendiente de recibir (solo pedidos de compra abiertos)
+    IFNULL(P."PT_RECIBIR", 0)                  AS "PT.RECIBIR",
 
     -- Disponible futuro (valor actual)
     (W."OnHand" - W."IsCommited" + W."OnOrder") AS "DISPON.FUTURO",
@@ -76,15 +76,29 @@ FROM "OITM" I
     ) M ON I."ItemCode" = M."ItemCode"
        AND W."WhsCode"  = M."Warehouse"
 
-    -- Entregas abiertas
+    -- Entregas abiertas (por almacén)
     LEFT JOIN (
         SELECT
             "ItemCode",
+            "WhsCode",
             SUM("OpenQty") AS "ENTREGAS"
         FROM "DLN1"
         WHERE "LineStatus" = 'O'
-        GROUP BY "ItemCode"
+        GROUP BY "ItemCode", "WhsCode"
     ) E ON I."ItemCode" = E."ItemCode"
+       AND W."WhsCode"  = E."WhsCode"
+
+    -- Pendiente de recibir (pedidos de compra abiertos, por almacén)
+    LEFT JOIN (
+        SELECT
+            "ItemCode",
+            "WhsCode",
+            SUM("OpenQty") AS "PT_RECIBIR"
+        FROM "POR1"
+        WHERE "LineStatus" = 'O'
+        GROUP BY "ItemCode", "WhsCode"
+    ) P ON I."ItemCode" = P."ItemCode"
+       AND W."WhsCode"  = P."WhsCode"
 
 WHERE
     (W."OnHand"        <> 0
