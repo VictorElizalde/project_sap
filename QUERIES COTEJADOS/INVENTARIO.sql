@@ -1,3 +1,13 @@
+-- ============================================================
+-- INVENTARIO
+-- ------------------------------------------------------------
+-- Descripción : Stock por artículo y almacén a una fecha dada.
+--               Muestra disponible, comprometido, pendiente de
+--               recibir, entregas abiertas y antigüedad (FIFO).
+-- Parámetros  : [%0%] Fecha de corte (DD/MM/YYYY). Si se deja
+--               vacío se usa la fecha actual.
+-- Tablas      : OITM, OITW, OITB, OMRC, OINM, DLN1, POR1
+-- ============================================================
 SELECT
     -- Marca
     IFNULL(MRC."FirmName", '-')                 AS "MARCA",

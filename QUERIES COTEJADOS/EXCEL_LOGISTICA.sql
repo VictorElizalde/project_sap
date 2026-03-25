@@ -1,3 +1,16 @@
+-- ============================================================
+-- EXCEL LOGÍSTICA
+-- ------------------------------------------------------------
+-- Descripción : Exportación logística de albaranes abiertos.
+--               Incluye datos del pedido base, destinatario,
+--               dirección completa (provincia/país por nombre),
+--               transportista y líneas de artículo.
+-- Parámetros  : [%0] Código de cliente (obligatorio)
+--               [%1]-[%4] Números de albarán adicionales
+--                         (opcionales, separados por comas)
+-- Tablas      : ODLN, DLN1, ORDR, RDR1, OCRD, CRD1, OITM,
+--               OSHP, DLN12, OCRY, OCST
+-- ============================================================
 SELECT
   -- Pedido
   O."DocNum"                          AS "Código Pedido",

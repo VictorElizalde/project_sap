@@ -1,3 +1,14 @@
+-- ============================================================
+-- LISTADO PEDIDOS CLIENTES
+-- ------------------------------------------------------------
+-- Descripción : Pedidos de venta abiertos con sus líneas.
+--               Incluye datos del cliente, agente, artículo,
+--               cantidades pendientes, precios y contacto
+--               (teléfono, e-mail y e-mail de facturas).
+-- Parámetros  : [%0] Código/s de cliente (opcional, separados
+--               por comas). Si se deja vacío muestra todos.
+-- Tablas      : ORDR, RDR1, OCRD, OSLP, OITM, CRD1
+-- ============================================================
 SELECT
     -- CLIENTE
     C."CardCode"                                 AS "Cliente",

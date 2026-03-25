@@ -1,3 +1,14 @@
+-- ============================================================
+-- LISTADO DE ALBARANES
+-- ------------------------------------------------------------
+-- Descripción : Listado de albaranes abiertos con sus líneas.
+--               Incluye pedido base, cliente, dirección de
+--               envío completa (provincia/país por nombre),
+--               transportista y ramo del cliente.
+-- Parámetros  : Ninguno (filtra DocStatus = 'O')
+-- Tablas      : ODLN, DLN1, ORDR, OCRD, CRD1, OITM, DLN12,
+--               OCRY, OCST, OSHP, OCQG
+-- ============================================================
 SELECT
     -- DOCUMENTO
     D."DocNum"                                   AS "Núm.Albarán",

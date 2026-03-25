@@ -1,3 +1,13 @@
+-- ============================================================
+-- VENTAS CATALUNIA
+-- ------------------------------------------------------------
+-- Descripción : Ventas agrupadas por cliente para las centrales
+--               de compras «CATALONIA HOTELS» y
+--               «ASOCIADO QUANTUM», en un rango de fechas.
+-- Parámetros  : [%DateFrom%] Fecha inicio (DD/MM/YYYY)
+--               [%DateTo%]   Fecha fin    (DD/MM/YYYY)
+-- Tablas      : OINV, INV1, OCRD, OCRG, @GEI_CENTCOMP
+-- ============================================================
 SELECT
     -- CLI-AG
     G."GroupCode"                                AS "CLI-AG",

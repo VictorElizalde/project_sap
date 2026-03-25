@@ -1,3 +1,12 @@
+-- ============================================================
+-- CUENTAS CON MOVIMIENTOS POR MES
+-- ------------------------------------------------------------
+-- Descripción : Movimientos contables de cuentas de grupo 6 y 7
+--               (gastos e ingresos) desglosados por mes para un
+--               año dado. Incluye fila de TOTAL (beneficio/pérdida).
+-- Parámetros  : [%0] Año de consulta (YYYY)
+-- Tablas      : JDT1, OACT
+-- ============================================================
 SELECT
  CASE WHEN GROUPING(A."AcctCode") = 1
       THEN 'TOTAL BENEFICIO / PÉRDIDA'
