@@ -1,3 +1,14 @@
+-- ============================================================
+-- ESTADÍSTICAS DE VENTAS
+-- ------------------------------------------------------------
+-- Descripción : Estadísticas de ventas por factura y línea.
+--               Incluye cliente, artículo, familia, marca,
+--               agente, costes, margen y proveedor.
+-- Parámetros  : [%FechaDesde%] Fecha inicio (opcional)
+--               [%FechaHasta%] Fecha fin    (opcional)
+-- Tablas      : OINV, INV1, OCRD, OCRG, OITM, OITB, OMRC,
+--               OSLP, OSHP
+-- ============================================================
 SELECT
     C."CardCode"                                AS "Cliente",
     C."CardName"                                AS "Nombre Cliente",

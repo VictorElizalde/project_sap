@@ -1,3 +1,15 @@
+-- ============================================================
+-- LISTADO PEDIDOS PROVEEDORES TODOS
+-- ------------------------------------------------------------
+-- Descripción : Todos los pedidos de compra (abiertos y cerrados)
+--               con sus líneas. Incluye datos del proveedor,
+--               artículo, cantidades, precios e importe.
+-- Parámetros  : [%FechaDesde%]  Fecha inicio (opcional)
+--               [%FechaHasta%]  Fecha fin    (opcional)
+--               [%Proveedor%]   Código/s de proveedor, separados
+--                               por comas (opcional)
+-- Tablas      : OPOR, POR1, OCRD, OITM, OITB
+-- ============================================================
 SELECT
     -- PROVEEDOR
     C."CardCode"                                 AS "Codigo",

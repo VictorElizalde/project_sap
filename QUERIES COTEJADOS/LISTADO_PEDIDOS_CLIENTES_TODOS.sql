@@ -1,3 +1,15 @@
+-- ============================================================
+-- LISTADO PEDIDOS CLIENTES TODOS
+-- ------------------------------------------------------------
+-- Descripción : Todos los pedidos de venta (abiertos y cerrados)
+--               con sus líneas. Incluye datos del cliente,
+--               agente, artículo, cantidades y contacto.
+-- Parámetros  : [%FechaDesde%] Fecha inicio (opcional)
+--               [%FechaHasta%] Fecha fin    (opcional)
+--               [%Cliente%]    Código/s de cliente, separados
+--                              por comas (opcional)
+-- Tablas      : ORDR, RDR1, OCRD, OSLP, OITM
+-- ============================================================
 SELECT
     -- CLIENTE
     C."CardCode"                                 AS "Cliente",
