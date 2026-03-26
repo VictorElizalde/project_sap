@@ -53,7 +53,10 @@ FROM "OINV" V
                    ON C."U_GEI_CentC" = CC."Code"
 
 WHERE
-    V."DocDate" BETWEEN '[%DateFrom%]' AND '[%DateTo%]'
+    V."DocDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND
+        CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
     AND CC."Name" IN ('CATALONIA HOTELS', 'ASOCIADO QUANTUM')
 
 GROUP BY

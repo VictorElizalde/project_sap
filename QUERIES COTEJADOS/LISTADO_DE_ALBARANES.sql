@@ -27,9 +27,9 @@ SELECT
     D."CardName"                                 AS "Nombre destinatario",
 
     -- DIRECCIÓN
-    A."Street"                                   AS "Dirección destinatario",
-    A."ZipCode"                                  AS "C.Postal destinatario",
-    A."City"                                     AS "Población destinatario",
+    D."ShipToCode"                               AS "Dirección destinatario",
+    DL."ZipCodeS"                                 AS "C.Postal destinatario",
+    DL."CityS"                                    AS "Población destinatario",
     COALESCE(CST."Name", DL."StateS")            AS "Provincia destinatario",
     COALESCE(CRY."Name", DL."CountryS")          AS "País destinatario",
 
@@ -64,20 +64,20 @@ SELECT
 
     -- ARTÍCULOS
     COALESCE(QG."GroupName", '')                 AS "Ramo",
-    ''                                           AS "Artículo",
-    ''                                           AS "Descripción",
-    ''                                           AS "Cantidad",
-    ''                                           AS "Precio",
-    ''                                           AS "Dtos.",
-    ''                                           AS "Importe",
+    L."ItemCode"                                 AS "Artículo",
+    L."Dscription"                               AS "Descripción",
+    L."Quantity"                                 AS "Cantidad",
+    L."Price"                                    AS "Precio",
+    L."DiscPrcnt"                                AS "Dtos.",
+    L."LineTotal"                                AS "Importe",
 
     -- COSTES (NO EXISTEN EN ALBARÁN)
-    ''                                           AS "P.Coste",
-    ''                                           AS "Imp.Coste",
+    0                                            AS "P.Coste",
+    0                                            AS "Imp.Coste",
 
     -- PROVEEDOR / FAMILIA
-    ''                                           AS "Proveedor",
-    ''                                           AS "Familia"
+    CAST(NULL AS NVARCHAR(100))                  AS "Proveedor",
+    I."ItmsGrpCod"                               AS "Familia"
 
 FROM "ODLN" D
 JOIN "DLN1" L
@@ -106,6 +106,14 @@ LEFT JOIN "OCQG" QG ON C."GroupCode" = QG."GroupCode"
 
 WHERE
     D."DocStatus" = 'O'
+    AND D."DocDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND
+        CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND (
+        LOCATE(',' || D."CardCode" || ',', ',' || '[%Cliente%]' || ',') > 0
+        OR '[%Cliente%]' = ''
+    )
 
 ORDER BY
     D."DocNum",
