@@ -26,7 +26,7 @@ SELECT
     O."PickRmrk"                                 AS "Observaciones Externas",
 
     -- ARTÍCULO
-    L."ItemCode"                                 AS "Articulo",
+    CAST(L."ItemCode" AS NVARCHAR)               AS "Articulo",
     L."Dscription"                               AS "Descripcion",
     L."OpenQty"                                  AS "Ctd.Pendiente",
     L."Price"                                    AS "Precio",
@@ -34,10 +34,10 @@ SELECT
 
     -- CONTACTO
     COALESCE(C."Phone1", '')                     AS "Telefono",
-    COALESCE(O."NumAtCard", '')                  AS "Telefono 2",
+    ''                                           AS "Telefono 2",
     L."PoTrgNum"                                 AS "Doc. Aprov.",
     C."CardCode"                                 AS "Referencia Cliente",
-    ''                                           AS "E-Mail",
+    COALESCE(O."NumAtCard", '')                  AS "Nº Ref. Cliente",
     ''                                           AS "E-Mail Facturas",
 
     -- FAMILIA

@@ -21,11 +21,15 @@ SELECT
     O."DocDate"                                  AS "F.Pedido",
 
     -- ARTÍCULO
-    L."ItemCode"                                 AS "Articulo",
+    CAST(L."ItemCode" AS NVARCHAR)               AS "Articulo",
     L."Dscription"                               AS "Descripcion",
     L."OpenQty"                                  AS "Cantidad",
     L."Price"                                    AS "Precio",
     L."LineTotal"                                AS "Importe",
+
+    -- PEDIDO CLIENTE ASOCIADO
+    COALESCE(SC."CardName", '')                  AS "Cliente",
+    COALESCE(SO."ShipToCode", '')                AS "Entrega",
 
     -- FAMILIA
     COALESCE(G."ItmsGrpNam", '')                 AS "Familia"
@@ -35,6 +39,9 @@ INNER JOIN "POR1" L  ON O."DocEntry" = L."DocEntry"
 INNER JOIN "OCRD" C  ON O."CardCode" = C."CardCode"
 LEFT JOIN  "OITM" I  ON L."ItemCode" = I."ItemCode"
 LEFT JOIN  "OITB" G  ON I."ItmsGrpCod" = G."ItmsGrpCod"
+LEFT JOIN  "ORDR" SO ON L."BaseEntry" = SO."DocEntry"
+                     AND L."BaseType" = 17
+LEFT JOIN  "OCRD" SC ON SO."CardCode" = SC."CardCode"
 
 WHERE
     O."DocDate" BETWEEN

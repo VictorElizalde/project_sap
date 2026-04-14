@@ -27,12 +27,25 @@ SELECT
     D."SlpCode"                                  AS "Agente",
     D."CardCode"                                 AS "Cliente",
     C."CardName"                                 AS "Nombre Fiscal",
+
+    -- Nombre del destinatario de envío (nombre en el documento de albarán)
     D."CardName"                                 AS "Nombre destinatario",
 
     -- DIRECCIÓN
-    D."ShipToCode"                               AS "Dirección destinatario",
-    DL."ZipCodeS"                                 AS "C.Postal destinatario",
-    DL."CityS"                                    AS "Población destinatario",
+    -- Dirección de envío: calle + número + piso/puerta desde DLN12
+    TRIM(
+        COALESCE(DL."StreetS", '') ||
+        CASE WHEN DL."StreetNoS" IS NOT NULL AND DL."StreetNoS" <> ''
+             THEN ' ' || DL."StreetNoS" ELSE '' END ||
+        CASE WHEN CAST(DL."BuildingS" AS NVARCHAR(500)) IS NOT NULL
+              AND CAST(DL."BuildingS" AS NVARCHAR(500)) <> ''
+             THEN ', ' || CAST(DL."BuildingS" AS NVARCHAR(500)) ELSE '' END
+    )                                            AS "Dirección destinatario",
+
+    -- Código postal con 0 inicial preservado (LPAD a 5 dígitos)
+    LPAD(DL."ZipCodeS", 5, '0')                 AS "C.Postal destinatario",
+
+    DL."CityS"                                   AS "Población destinatario",
     COALESCE(CST."Name", DL."StateS")            AS "Provincia destinatario",
     COALESCE(CRY."Name", DL."CountryS")          AS "País destinatario",
 
@@ -67,7 +80,10 @@ SELECT
 
     -- ARTÍCULOS
     COALESCE(QG."GroupName", '')                 AS "Ramo",
-    L."ItemCode"                                 AS "Artículo",
+
+    -- Código de artículo como texto para preservar el 0 inicial
+    CAST(L."ItemCode" AS NVARCHAR)               AS "Artículo",
+
     L."Dscription"                               AS "Descripción",
     L."Quantity"                                 AS "Cantidad",
     L."Price"                                    AS "Precio",

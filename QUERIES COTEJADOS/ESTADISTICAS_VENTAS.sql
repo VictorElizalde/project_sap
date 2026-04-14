@@ -9,66 +9,106 @@
 -- Tablas      : OINV, INV1, OCRD, OCRG, OITM, OITB, OMRC,
 --               OSLP, OSHP
 -- ============================================================
+
+-- Pedidos de compra + Abonos de compra (en negativo)
 SELECT
-    C."CardCode"                                AS "Cliente",
-    C."CardName"                                AS "Nombre Cliente",
-    COALESCE(V."Address2", V."Address")         AS "DIRECCION ENTREGA DE CLIENTE",
+    -- PROVEEDOR
+    C."CardCode"                                        AS "Codigo",
+    C."CardName"                                        AS "Nombre Proveedor",
 
-    C."GroupCode"                               AS "Cl.Agrup",
-    CG."GroupName"                              AS "Ramo",
-    C."IndustryC"                               AS "Actividad",
+    -- PEDIDO COMPRA
+    O."DocNum"                                          AS "Pedido",
+    COALESCE(SO."ShipToCode", '')                       AS "Destinatario",
+    COALESCE(CAD."Name", '')                            AS "Cadena",
+    COALESCE(CEN."Name", '')                            AS "Central Compras",
+    O."DocDate"                                         AS "F.Pedido",
+    L."WhsCode"                                         AS "Deposito",
+    O."DocDueDate"                                      AS "F.Entrega",
 
-    M."FirmName"                                AS "Marca",
-    G."ItmsGrpNam"                              AS "Familia",
+    -- ARTÍCULO
+    CAST(L."ItemCode" AS NVARCHAR)                      AS "Articulo",
+    L."Dscription"                                      AS "Descripcion",
+    L."Quantity"                                        AS "Cantidad",
+    L."Price"                                           AS "Precio",
+    L."LineTotal"                                       AS "Importe",
 
-    L."WhsCode"                                 AS "Depósito",
-    L."ItemCode"                                AS "Articulo",
-    L."Dscription"                              AS "Descripción",
+    -- ALBARÁN RECEPCIÓN
+    COALESCE(RN."DocNum", NULL)                         AS "Albaran Recepcion",
 
-    S."SlpName"                                 AS "Agente",
-    V."DocNum"                                  AS "Factura",
-    TO_VARCHAR(V."DocDate",'DD/MM/YYYY')        AS "Fecha",
+    -- JERARQUÍA ARTÍCULO
+    COALESCE(I."U_GEST_Fam1", '')                       AS "Grupo",
+    COALESCE(I."U_GEST_Fam2", '')                       AS "Familia",
+    COALESCE(I."U_GEST_Fam3", '')                       AS "Subfamilia"
 
-    L."Quantity"                                AS "Cantidad",
-    L."LineTotal"                               AS "Importe Venta",
-
-    COALESCE(L."StockValue",0)                  AS "Importe Coste",
-    (L."LineTotal" - COALESCE(L."StockValue",0)) AS "Importe Margen",
-
-    CASE
-        WHEN L."LineTotal" <> 0
-            THEN ROUND(
-                (L."LineTotal" - COALESCE(L."StockValue",0))
-                    / L."LineTotal" * 100, 2)
-        ELSE 0
-    END                                         AS "% Margen",
-
-    SH."TrnspName"                              AS "Forma de envio",
-
-    ''                                          AS "Mot.Abono",
-    ''                                          AS "Desc. Abono",
-
-    P."CardName"                                AS "Proveedor",
-    I."SuppCatNum"                              AS "Ref.Proveedor"
-
-FROM "OINV" V
-JOIN "INV1" L   ON V."DocEntry" = L."DocEntry"
-JOIN "OCRD" C   ON V."CardCode" = C."CardCode"
-LEFT JOIN "OCRG" CG ON C."GroupCode" = CG."GroupCode"
-LEFT JOIN "OITM" I  ON L."ItemCode" = I."ItemCode"
-LEFT JOIN "OITB" G  ON I."ItmsGrpCod" = G."ItmsGrpCod"
-LEFT JOIN "OMRC" M  ON I."FirmCode" = M."FirmCode"
-LEFT JOIN "OSLP" S  ON V."SlpCode" = S."SlpCode"
-LEFT JOIN "OSHP" SH ON V."TrnspCode" = SH."TrnspCode"
-LEFT JOIN "OCRD" P  ON I."CardCode" = P."CardCode"
+FROM "OPOR" O
+INNER JOIN "POR1" L   ON O."DocEntry" = L."DocEntry"
+INNER JOIN "OCRD" C   ON O."CardCode" = C."CardCode"
+LEFT JOIN  "OITM" I   ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "PDN1" RL  ON RL."BaseEntry" = O."DocEntry"
+                      AND RL."BaseType" = 22
+                      AND RL."ItemCode" = L."ItemCode"
+                      AND RL."LineNum"  = L."LineNum"
+LEFT JOIN  "OPDN" RN  ON RL."DocEntry" = RN."DocEntry"
+LEFT JOIN  "ORDR" SO  ON L."BaseEntry" = SO."DocEntry"
+                      AND L."BaseType" = 17
+LEFT JOIN  "OCRD" SC  ON SO."CardCode" = SC."CardCode"
+LEFT JOIN  "@GEI_CADENA"   CAD ON SC."U_GEI_Cadena" = CAD."Code"
+LEFT JOIN  "@GEI_CENTCOMP" CEN ON SC."U_GEI_CentC"  = CEN."Code"
 
 WHERE
-    V."DocDate" BETWEEN
+    O."DocDate" BETWEEN
         CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
     AND
         CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND (
+        LOCATE(',' || C."CardCode" || ',', ',' || '[%Proveedor%]' || ',') > 0
+        OR '[%Proveedor%]' = ''
+    )
+
+UNION ALL
+
+-- ABONOS DE COMPRA (en negativo)
+SELECT
+    C."CardCode",
+    C."CardName",
+    O."DocNum",
+    COALESCE(SO."ShipToCode", ''),
+    COALESCE(CAD."Name", ''),
+    COALESCE(CEN."Name", ''),
+    O."DocDate",
+    L."WhsCode",
+    O."DocDueDate",
+    CAST(L."ItemCode" AS NVARCHAR),
+    L."Dscription",
+    -L."Quantity",
+    L."Price",
+    -L."LineTotal",
+    NULL,
+    COALESCE(I."U_GEST_Fam1", ''),
+    COALESCE(I."U_GEST_Fam2", ''),
+    COALESCE(I."U_GEST_Fam3", '')
+
+FROM "ORPC" O
+INNER JOIN "RPC1" L   ON O."DocEntry" = L."DocEntry"
+INNER JOIN "OCRD" C   ON O."CardCode" = C."CardCode"
+LEFT JOIN  "OITM" I   ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "ORDR" SO  ON L."BaseEntry" = SO."DocEntry"
+                      AND L."BaseType" = 17
+LEFT JOIN  "OCRD" SC  ON SO."CardCode" = SC."CardCode"
+LEFT JOIN  "@GEI_CADENA"   CAD ON SC."U_GEI_Cadena" = CAD."Code"
+LEFT JOIN  "@GEI_CENTCOMP" CEN ON SC."U_GEI_CentC"  = CEN."Code"
+
+WHERE
+    O."DocDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND
+        CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND (
+        LOCATE(',' || C."CardCode" || ',', ',' || '[%Proveedor%]' || ',') > 0
+        OR '[%Proveedor%]' = ''
+    )
 
 ORDER BY
-    V."DocDate",
-    V."DocNum",
-    L."LineNum";
+    "Codigo",
+    "Pedido",
+    "Articulo";

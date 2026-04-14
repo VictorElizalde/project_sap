@@ -26,7 +26,7 @@ SELECT
   A."Address"                         AS "Nombre destinatario",
 
   A."Street"                          AS "Dirección destinatario",
-  A."ZipCode"                         AS "C.Postal destinatario",
+  LPAD(A."ZipCode", 5, '0')           AS "C.Postal destinatario",
   A."City"                            AS "Población destinatario",
   COALESCE(CST."Name", DL."StateS")   AS "Provincia destinatario",
   COALESCE(CRY."Name", DL."CountryS") AS "País destinatario",
@@ -43,7 +43,7 @@ SELECT
   T."TrnspName"                       AS "Transportista",
   -- Línea
   L."LineNum" + 1                     AS "Línea comanda",
-  L."ItemCode"                        AS "Código artículo",
+  CAST(L."ItemCode" AS NVARCHAR)      AS "Código artículo",
   L."Dscription"                      AS "Descripción",
   L."Quantity"                        AS "Cantidad",
   I."SWeight1" * L."Quantity"         AS "Peso",
