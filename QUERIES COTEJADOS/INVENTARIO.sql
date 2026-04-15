@@ -26,6 +26,9 @@ SELECT
     -- Depósito
     W."WhsCode"                                 AS "DEPOSITO",
 
+    -- Precio medio de compra (valoración por almacén)
+    COALESCE(W."AvgPrice", 0)                   AS "PRECIO MEDIO",
+
     -- Disponible al cierre de la fecha indicada
     COALESCE(
         (SELECT SUM("InQty" - "OutQty")

@@ -29,7 +29,7 @@ SELECT
     C."CardName"                                 AS "Nombre Fiscal",
 
     -- Nombre del destinatario de envío (nombre en el documento de albarán)
-    D."CardName"                                 AS "Nombre destinatario",
+    D."ShipToCode"                                 AS "Nombre destinatario",
 
     -- DIRECCIÓN
     -- Dirección de envío: calle + número + piso/puerta desde DLN12

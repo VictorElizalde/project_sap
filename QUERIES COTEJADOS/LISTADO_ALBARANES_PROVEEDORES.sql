@@ -20,11 +20,20 @@ SELECT
     O."DocDate"                                  AS "Fecha Pedido",
 
     -- PROVEEDOR
-    D."CardCode"                                  AS "Proveedor",
+    D."CardCode"                                 AS "Proveedor",
     C."CardName"                                 AS "Nombre",
 
-    -- ENTREGA
-    D."ShipToCode"                               AS "Entrega en",
+    -- CLIENTE ASOCIADO AL PEDIDO DE COMPRA (via pedido de venta vinculado)
+    COALESCE(SC."CardName", '')                  AS "Cliente",
+
+    -- NÚMERO DE PEDIDO DE CLIENTE VINCULADO
+    COALESCE(CAST(SO."DocNum" AS VARCHAR), '')   AS "Núm.Ped.Cliente",
+
+    -- ENTREGA (dirección real del albarán)
+    SO."ShipToCode"                               AS "Entrega en",
+
+    -- OBSERVACIONES INTERNAS DEL PEDIDO DE COMPRA
+    COALESCE(O."Comments", '')                   AS "Observaciones",
 
     -- LÍNEA
     L."WhsCode"                                  AS "Depósito",
@@ -35,10 +44,18 @@ SELECT
     L."LineTotal"                                AS "Importe"
 
 FROM "OPDN" D
-INNER JOIN "PDN1" L   ON D."DocEntry" = L."DocEntry"
-INNER JOIN "OCRD" C   ON D."CardCode" = C."CardCode"
-LEFT JOIN  "OPOR" O   ON L."BaseEntry" = O."DocEntry"
-                      AND L."BaseType" = 22
+INNER JOIN "PDN1" L    ON D."DocEntry"   = L."DocEntry"
+INNER JOIN "OCRD" C    ON D."CardCode"   = C."CardCode"
+LEFT JOIN  "OPOR" O    ON L."BaseEntry"  = O."DocEntry"
+                       AND L."BaseType"  = 22
+-- Línea del pedido de compra para obtener el pedido de venta vinculado
+LEFT JOIN  "POR1" PL   ON O."DocEntry"   = PL."DocEntry"
+                       AND PL."BaseType" = 17
+                       AND PL."ItemCode" = L."ItemCode"
+-- Pedido de venta vinculado
+LEFT JOIN  "ORDR" SO   ON PL."BaseEntry" = SO."DocEntry"
+-- Cliente del pedido de venta
+LEFT JOIN  "OCRD" SC   ON SO."CardCode"  = SC."CardCode"
 
 WHERE
     D."DocDate" BETWEEN
