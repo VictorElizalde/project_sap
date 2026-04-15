@@ -82,7 +82,7 @@ SELECT
     COALESCE(QG."GroupName", '')                 AS "Ramo",
 
     -- Código de artículo como texto para preservar el 0 inicial
-    CAST(L."ItemCode" AS NVARCHAR)               AS "Artículo",
+    L."ItemCode"                                 AS "Artículo",
 
     L."Dscription"                               AS "Descripción",
     L."Quantity"                                 AS "Cantidad",

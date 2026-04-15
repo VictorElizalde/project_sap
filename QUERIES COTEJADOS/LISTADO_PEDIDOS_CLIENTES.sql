@@ -26,7 +26,7 @@ SELECT
     O."PickRmrk"                                 AS "Observaciones Externas",
 
     -- ARTÍCULO
-    CAST(L."ItemCode" AS NVARCHAR)               AS "Articulo",
+    L."ItemCode"                                 AS "Articulo",
     L."Dscription"                               AS "Descripcion",
     L."OpenQty"                                  AS "Ctd.Pendiente",
     L."Price"                                    AS "Precio",

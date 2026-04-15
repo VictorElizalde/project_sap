@@ -20,7 +20,7 @@ SELECT
     I."U_GEST_Fam2"                             AS "SUBFAMILIA",
 
     -- Artículo
-    CAST(I."ItemCode" AS NVARCHAR)              AS "ARTICULO",
+    I."ItemCode"                                 AS "ARTICULO",
     I."ItemName"                                AS "DESCRIPCION",
 
     -- Depósito

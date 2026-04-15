@@ -43,7 +43,7 @@ SELECT
   T."TrnspName"                       AS "Transportista",
   -- Línea
   L."LineNum" + 1                     AS "Línea comanda",
-  CAST(L."ItemCode" AS NVARCHAR)      AS "Código artículo",
+  L."ItemCode"                        AS "Código artículo",
   L."Dscription"                      AS "Descripción",
   L."Quantity"                        AS "Cantidad",
   I."SWeight1" * L."Quantity"         AS "Peso",

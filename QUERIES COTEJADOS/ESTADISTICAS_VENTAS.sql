@@ -26,7 +26,7 @@ SELECT
     O."DocDueDate"                                      AS "F.Entrega",
 
     -- ARTÍCULO
-    CAST(L."ItemCode" AS NVARCHAR)                      AS "Articulo",
+    L."ItemCode"                                     AS "Articulo",
     L."Dscription"                                      AS "Descripcion",
     L."Quantity"                                        AS "Cantidad",
     L."Price"                                           AS "Precio",
@@ -78,7 +78,7 @@ SELECT
     O."DocDate",
     L."WhsCode",
     O."DocDueDate",
-    CAST(L."ItemCode" AS NVARCHAR),
+    L."ItemCode",
     L."Dscription",
     -L."Quantity",
     L."Price",

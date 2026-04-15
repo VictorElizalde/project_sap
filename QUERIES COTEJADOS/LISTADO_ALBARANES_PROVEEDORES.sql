@@ -20,7 +20,7 @@ SELECT
     O."DocDate"                                  AS "Fecha Pedido",
 
     -- PROVEEDOR
-    D."CardCode"                                 AS "Proveedor",
+    D."CardCode"                                  AS "Proveedor",
     C."CardName"                                 AS "Nombre",
 
     -- ENTREGA
