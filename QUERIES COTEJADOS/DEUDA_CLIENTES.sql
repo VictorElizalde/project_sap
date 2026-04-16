@@ -1,142 +1,46 @@
-/******************************************************************************************
- CSV: DEUDA CLIENTES (Facturas abiertas)
-
- Columnas requeridas:
- Cliente | Nombre | Vto | Documento | Tipo Doc. | Situación | Fecha | Tem. | Agente |
- Banco | Remesa | T.Rem. | C.G. | Importe | Importe Div. | DIV |
- NIF | Cl.Agrup. | Dias Demora
-
- CONSIDERACIONES IMPORTANTES (LEER ANTES):
- 1) Este listado es SOLO para CLIENTES → se usa OINV (facturas de clientes),
-    NO OPCH (que es proveedores).
- 2) SAP B1 NO maneja Remesas, T.Rem. ni Cl.Agrup. como estándar:
-    → se dejan como columnas vacías.
- 3) "Situación" se interpreta como:
-    - 'Abierta' → DocStatus = 'O'
-    - 'Cerrada' → DocStatus = 'C'
- 4) "Dias Demora" se calcula contra la fecha del sistema (CURRENT_DATE).
- 5) "C.G." se interpreta como Cuenta Contable de control del cliente (OCRD.DebPayAcct).
- 6) Importe = Total factura - Pagado a la fecha.
-******************************************************************************************/
+-- ============================================================
+-- DEUDA CLIENTES
+-- ------------------------------------------------------------
+-- Descripción : Listado de facturas de clientes abiertas con
+--               saldo pendiente. Muestra importe pendiente,
+--               días de demora y datos fiscales del cliente.
+-- Parámetros  : (ninguno) – muestra toda la deuda abierta
+-- Tablas      : OINV, OCRD
+-- ============================================================
 SELECT
     I."CardCode"                                   AS "Cliente",
-    C."CardName"                                  AS "Nombre",
-
-    I."DocDueDate"                                AS "Vto",
-    I."DocNum"                                    AS "Documento",
-    'TRANSF.'                                     AS "Tipo Doc.",
-
+    C."CardName"                                   AS "Nombre",
+    I."DocDueDate"                                 AS "Vto",
+    I."DocNum"                                     AS "Documento",
+    'TRANSF.'                                      AS "Tipo Doc.",
     CASE
         WHEN I."DocStatus" = 'O' THEN 'PENDTE.'
         ELSE 'CERRADA'
-        END                                           AS "Situación",
-
-    I."DocDate"                                   AS "Fecha",
-
-    C."GroupNum"                                  AS "Tem.",
-    I."SlpCode"                                   AS "Agente",
-
-    C."BankCode"                                  AS "Banco",
+    END                                            AS "Situación",
+    I."DocDate"                                    AS "Fecha",
+    C."GroupNum"                                   AS "Tem.",
+    I."SlpCode"                                    AS "Agente",
+    C."BankCode"                                   AS "Banco",
     0                                              AS "Remesa",
     ''                                             AS "T.Rem.",
-
-    C."DebPayAcct"                                AS "C.G.",
-
-    (I."DocTotal" - I."PaidToDate")               AS "Importe",
-
-    (I."DocTotalFC" - I."PaidFC")                 AS "Importe Div.",
-    I."DocCur"                                    AS "DIV",
-
-    C."LicTradNum"                                AS "NIF",
-
+    C."DebPayAcct"                                 AS "C.G.",
+    (I."DocTotal" - I."PaidToDate")                AS "Importe",
+    (I."DocTotalFC" - I."PaidFC")                  AS "Importe Div.",
+    I."DocCur"                                     AS "DIV",
+    C."LicTradNum"                                 AS "NIF",
     ''                                             AS "Cl.Agrup.",
-
-    CASE
-        WHEN I."DocStatus" = 'O'
-            AND I."DocDueDate" < CURRENT_DATE
-            THEN DAYS_BETWEEN(I."DocDueDate", CURRENT_DATE)
-        ELSE 0
-        END                                           AS "Dias Demora"
-
-FROM "OINV" I
-         JOIN "OCRD" C
-              ON I."CardCode" = C."CardCode"
-
-FROM "OINV" I
-INNER JOIN "OCRD" C
-        ON I."CardCode" = C."CardCode"
-
-WHERE
-    I."DocStatus" = 'O'
-  AND I."DocTotal" > I."PaidToDate"
-
-ORDER BY
-    I."DocDueDate",
-    C."CardName";
-
-/******************************************************************************************
- NOTAS FINALES:
-
- ✔ Este query genera TODAS las columnas del CSV solicitado.
- ✔ Las columnas sin correspondencia estándar en SAP se dejan explícitamente en blanco.
- ✔ Si tu sistema usa UDFs para Remesas / Agrupaciones, se pueden sustituir fácilmente.
- ✔ Compatible con SAP Business One sobre HANA (SQLScript).
-
- Sugerencia:
- - Ideal para:
-   ▸ Crystal Reports
-   ▸ DataGrip
-   ▸ Consultas de Usuario
-   ▸ Exportación directa a CSV
-******************************************************************************************/
-SELECT
-    I."CardCode"                                   AS "Cliente",
-    C."CardName"                                  AS "Nombre",
-
-    I."DocDueDate"                                AS "Vto",
-    I."DocNum"                                    AS "Documento",
-    'TRANSF.'                                     AS "Tipo Doc.",
-
-    CASE
-        WHEN I."DocStatus" = 'O' THEN 'PENDTE.'
-        ELSE 'CERRADA'
-    END                                           AS "Situación",
-
-    I."DocDate"                                   AS "Fecha",
-
-    C."GroupNum"                                  AS "Tem.",
-    I."SlpCode"                                   AS "Agente",
-
-    C."BankCode"                                  AS "Banco",
-    0                                              AS "Remesa",
-    ''                                             AS "T.Rem.",
-
-    C."DebPayAcct"                                AS "C.G.",
-
-    (I."DocTotal" - I."PaidToDate")               AS "Importe",
-
-    (I."DocTotalFC" - I."PaidFC")                 AS "Importe Div.",
-    I."DocCur"                                    AS "DIV",
-
-    C."LicTradNum"                                AS "NIF",
-
-    ''                                             AS "Cl.Agrup.",
-
     CASE
         WHEN I."DocStatus" = 'O'
          AND I."DocDueDate" < CURRENT_DATE
         THEN DAYS_BETWEEN(I."DocDueDate", CURRENT_DATE)
         ELSE 0
-    END                                           AS "Dias Demora"
-
+    END                                            AS "Dias Demora"
 FROM "OINV" I
 JOIN "OCRD" C
   ON I."CardCode" = C."CardCode"
-
 WHERE
     I."DocStatus" = 'O'
-AND I."DocTotal" > I."PaidToDate"
-
+    AND I."DocTotal" > I."PaidToDate"
 ORDER BY
     I."DocDueDate",
     C."CardName";

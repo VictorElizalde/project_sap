@@ -1,103 +1,59 @@
-/****************************************************************************************
- LIBRO DE IVA SOPORTADO – SAP BUSINESS ONE (HANA)
-
- OBJETIVO:
- - Generar el CSV de IVA SOPORTADO con estructura fiscal estándar.
- - Basado en FACTURAS DE PROVEEDORES (OPCH + PCH1).
- - Una línea por documento y tipo impositivo.
-
- CONSIDERACIONES IMPORTANTES:
- - SAP B1 NO guarda explícitamente:
-   • N/I, N/B, Tipo AUT → se dejan como columnas vacías.
-   • Medio de pago detallado por línea → aproximado desde pagos.
- - El TOTAL DOCUM corresponde al total de la factura (no por tipo).
- - Fecha Pago / Importe Pago se obtienen desde pagos salientes (OVPM).
- - Cod.Imp. se toma desde OVTG (grupo de IVA).
-****************************************************************************************/
-
+-- ============================================================
+-- LIBRO IVA SOPORTADO
+-- ------------------------------------------------------------
+-- Descripción : Libro de IVA soportado (compras). Una fila
+--               por factura de proveedor y tipo impositivo.
+--               Incluye datos de pago desde OVPM/VPM2.
+-- Parámetros  : [%FechaDesde%] Fecha inicio (YYYY-MM-DD)
+--               [%FechaHasta%] Fecha fin    (YYYY-MM-DD)
+-- Tablas      : OPCH, PCH1, OVTG, OCRD, VPM2, OVPM
+-- ============================================================
 SELECT
- C."DocEntry" AS "N.REGISTRO",
-
- TO_VARCHAR(C."DocDate", 'DD/MM/YYYY') AS "FECHA",
-
- BP."LicTradNum" AS "NIF/DNI",
-
- BP."CardName" AS "NOMBRE",
-
- SUM(L."LineTotal") AS "BASE IVA",
-
- T."Rate" AS "TIPO",
-
- SUM(L."LineTotal" * T."Rate" / 100) AS "CUOTA",
-
- C."DocTotal" AS "TOTAL DOCUM",
-
- 'F' AS "F/A", -- Factura
-
- '' AS "N/I", -- No informado en B1
- '' AS "N/B", -- No informado en B1
- '' AS "Tipo AUT", -- No aplica
-
- C."NumAtCard" AS "S/factura", -- Nº factura proveedor
-
- C."Comments" AS "Comentarios",
-
- BP."CardName" AS "Factura Directa a",
-
- TO_VARCHAR(P."DocDate", 'DD/MM/YYYY') AS "Fecha Pago",
-
- P."DocTotal" AS "Importe Pago",
-
- P."CashAcct" AS "Medio Cuenta",
-
- T."Code" AS "Cod.Imp.",
-
- T."Name" AS "Descripción"
-
+    C."DocEntry"                                  AS "N.REGISTRO",
+    TO_VARCHAR(C."DocDate", 'DD/MM/YYYY')         AS "FECHA",
+    BP."LicTradNum"                               AS "NIF/DNI",
+    BP."CardName"                                 AS "NOMBRE",
+    SUM(L."LineTotal")                            AS "BASE IVA",
+    T."Rate"                                      AS "TIPO",
+    SUM(L."LineTotal" * T."Rate" / 100)           AS "CUOTA",
+    C."DocTotal"                                  AS "TOTAL DOCUM",
+    'F'                                           AS "F/A",
+    ''                                            AS "N/I",
+    ''                                            AS "N/B",
+    ''                                            AS "Tipo AUT",
+    C."NumAtCard"                                 AS "S/factura",
+    C."Comments"                                  AS "Comentarios",
+    BP."CardName"                                 AS "Factura Directa a",
+    TO_VARCHAR(P."DocDate", 'DD/MM/YYYY')         AS "Fecha Pago",
+    P."DocTotal"                                  AS "Importe Pago",
+    P."CashAcct"                                  AS "Medio Cuenta",
+    T."Code"                                      AS "Cod.Imp.",
+    T."Name"                                      AS "Descripción"
 FROM "OPCH" C
-INNER JOIN "PCH1" L
- ON C."DocEntry" = L."DocEntry"
-
-LEFT JOIN "OVTG" T
- ON L."VatGroup" = T."Code"
-
-LEFT JOIN "OCRD" BP
- ON C."CardCode" = BP."CardCode"
-
-LEFT JOIN "VPM2" P2
- ON P2."DocEntry" = C."DocEntry"
- AND P2."InvType" = 18 -- Factura proveedor
-
-LEFT JOIN "OVPM" P
- ON P."DocEntry" = P2."DocNum"
-
+INNER JOIN "PCH1" L  ON C."DocEntry" = L."DocEntry"
+LEFT  JOIN "OVTG" T  ON L."VatGroup" = T."Code"
+LEFT  JOIN "OCRD" BP ON C."CardCode" = BP."CardCode"
+LEFT  JOIN "VPM2" P2 ON P2."DocEntry" = C."DocEntry" AND P2."InvType" = 18
+LEFT  JOIN "OVPM" P  ON P."DocEntry" = P2."DocNum"
 WHERE
- C."DocDate" BETWEEN DATE '2025-10-01' AND DATE '2025-10-31'
-AND T."Rate" IS NOT NULL
-
+    C."DocDate" >= TO_DATE('[%FechaDesde%]', 'YYYY-MM-DD')
+    AND C."DocDate" <= TO_DATE('[%FechaHasta%]', 'YYYY-MM-DD')
+    AND T."Rate" IS NOT NULL
 GROUP BY
- C."DocEntry",
- C."DocDate",
- BP."LicTradNum",
- BP."CardName",
- T."Rate",
- C."DocTotal",
- C."NumAtCard",
- C."Comments",
- P."DocDate",
- P."DocTotal",
- P."CashAcct",
- T."Code",
- T."Name"
-
+    C."DocEntry",
+    C."DocDate",
+    BP."LicTradNum",
+    BP."CardName",
+    T."Rate",
+    C."DocTotal",
+    C."NumAtCard",
+    C."Comments",
+    P."DocDate",
+    P."DocTotal",
+    P."CashAcct",
+    T."Code",
+    T."Name"
 ORDER BY
- C."DocDate",
- C."DocEntry",
- T."Rate";
-
-/****************************************************************************************
- NOTAS FINALES:
- - Listo para exportar a CSV.
- - LicTradNum se usa como NIF/DNI estándar en SAP B1 HANA.
- - Modelo compatible con Query Manager / Service Layer.
-****************************************************************************************/
+    C."DocDate",
+    C."DocEntry",
+    T."Rate";
