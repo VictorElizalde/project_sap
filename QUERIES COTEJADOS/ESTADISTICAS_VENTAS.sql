@@ -12,48 +12,46 @@
 
 -- Pedidos de compra + Abonos de compra (en negativo)
 SELECT
-    -- PROVEEDOR
+    -- TIPO DE DOCUMENTO
+    'Factura'                                           AS "Tipo",
+
+    -- CLIENTE
     C."CardCode"                                        AS "Codigo",
-    C."CardName"                                        AS "Nombre Proveedor",
+    C."CardName"                                        AS "Nombre Cliente",
 
-    -- PEDIDO COMPRA
-    O."DocNum"                                          AS "Pedido",
-    COALESCE(SO."ShipToCode", '')                       AS "Destinatario",
-    COALESCE(CAD."Name", '')                            AS "Cadena",
-    COALESCE(CEN."Name", '')                            AS "Central Compras",
-    O."DocDate"                                         AS "F.Pedido",
+    -- DOCUMENTO
+    O."DocNum"                                          AS "Num.Documento",
+    O."DocDate"                                         AS "Fecha",
+
+    -- VENDEDOR
+    COALESCE(SL."SlpName", '')                          AS "Vendedor",
+
+    -- DEPÓSITO Y ARTÍCULO
     L."WhsCode"                                         AS "Deposito",
-    O."DocDueDate"                                      AS "F.Entrega",
-
-    -- ARTÍCULO
-    L."ItemCode"                                     AS "Articulo",
+    L."ItemCode"                                        AS "Articulo",
     L."Dscription"                                      AS "Descripcion",
     L."Quantity"                                        AS "Cantidad",
     L."Price"                                           AS "Precio",
     L."LineTotal"                                       AS "Importe",
 
-    -- ALBARÁN RECEPCIÓN
-    COALESCE(RN."DocNum", NULL)                         AS "Albaran Recepcion",
+    -- MARGEN Y % MARGEN
+    L."GrssProfit"                                      AS "Margen",
+    CASE
+        WHEN L."LineTotal" <> 0
+        THEN ROUND(L."GrssProfit" / L."LineTotal" * 100, 2)
+        ELSE 0
+    END                                                 AS "% Margen",
 
     -- JERARQUÍA ARTÍCULO
     COALESCE(I."U_GEST_Fam1", '')                       AS "Grupo",
     COALESCE(I."U_GEST_Fam2", '')                       AS "Familia",
     COALESCE(I."U_GEST_Fam3", '')                       AS "Subfamilia"
 
-FROM "OPOR" O
-INNER JOIN "POR1" L   ON O."DocEntry" = L."DocEntry"
-INNER JOIN "OCRD" C   ON O."CardCode" = C."CardCode"
-LEFT JOIN  "OITM" I   ON L."ItemCode" = I."ItemCode"
-LEFT JOIN  "PDN1" RL  ON RL."BaseEntry" = O."DocEntry"
-                      AND RL."BaseType" = 22
-                      AND RL."ItemCode" = L."ItemCode"
-                      AND RL."LineNum"  = L."LineNum"
-LEFT JOIN  "OPDN" RN  ON RL."DocEntry" = RN."DocEntry"
-LEFT JOIN  "ORDR" SO  ON L."BaseEntry" = SO."DocEntry"
-                      AND L."BaseType" = 17
-LEFT JOIN  "OCRD" SC  ON SO."CardCode" = SC."CardCode"
-LEFT JOIN  "@GEI_CADENA"   CAD ON SC."U_GEI_Cadena" = CAD."Code"
-LEFT JOIN  "@GEI_CENTCOMP" CEN ON SC."U_GEI_CentC"  = CEN."Code"
+FROM "OINV" O
+INNER JOIN "INV1"  L  ON O."DocEntry" = L."DocEntry"
+INNER JOIN "OCRD"  C  ON O."CardCode" = C."CardCode"
+LEFT JOIN  "OITM"  I  ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "OSLP"  SL ON O."SlpCode"  = SL."SlpCode"
 
 WHERE
     O."DocDate" BETWEEN
@@ -61,42 +59,91 @@ WHERE
     AND
         CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
     AND (
-        LOCATE(',' || C."CardCode" || ',', ',' || '[%Proveedor%]' || ',') > 0
-        OR '[%Proveedor%]' = ''
+        LOCATE(',' || C."CardCode" || ',', ',' || '[%Cliente%]' || ',') > 0
+        OR '[%Cliente%]' = ''
+    )
+    AND (
+        COALESCE(SL."SlpName", '') = '[%Vendedor%]'
+        OR '[%Vendedor%]' = ''
     )
 
 UNION ALL
 
--- ABONOS DE COMPRA (en negativo)
+-- FACTURAS DE ANTICIPO (Down Payment)
 SELECT
+    'Anticipo',
     C."CardCode",
     C."CardName",
     O."DocNum",
-    COALESCE(SO."ShipToCode", ''),
-    COALESCE(CAD."Name", ''),
-    COALESCE(CEN."Name", ''),
     O."DocDate",
+    COALESCE(SL."SlpName", ''),
     L."WhsCode",
-    O."DocDueDate",
+    L."ItemCode",
+    L."Dscription",
+    L."Quantity",
+    L."Price",
+    L."LineTotal",
+    L."GrssProfit",
+    CASE
+        WHEN L."LineTotal" <> 0
+        THEN ROUND(L."GrssProfit" / L."LineTotal" * 100, 2)
+        ELSE 0
+    END,
+    COALESCE(I."U_GEST_Fam1", ''),
+    COALESCE(I."U_GEST_Fam2", ''),
+    COALESCE(I."U_GEST_Fam3", '')
+
+FROM "ODPI" O
+INNER JOIN "DPI1"  L  ON O."DocEntry" = L."DocEntry"
+INNER JOIN "OCRD"  C  ON O."CardCode" = C."CardCode"
+LEFT JOIN  "OITM"  I  ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "OSLP"  SL ON O."SlpCode"  = SL."SlpCode"
+
+WHERE
+    O."DocDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND
+        CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND (
+        LOCATE(',' || C."CardCode" || ',', ',' || '[%Cliente%]' || ',') > 0
+        OR '[%Cliente%]' = ''
+    )
+    AND (
+        COALESCE(SL."SlpName", '') = '[%Vendedor%]'
+        OR '[%Vendedor%]' = ''
+    )
+
+UNION ALL
+
+-- ABONOS / DEVOLUCIONES (en negativo)
+SELECT
+    'Abono',
+    C."CardCode",
+    C."CardName",
+    O."DocNum",
+    O."DocDate",
+    COALESCE(SL."SlpName", ''),
+    L."WhsCode",
     L."ItemCode",
     L."Dscription",
     -L."Quantity",
     L."Price",
     -L."LineTotal",
-    NULL,
+    -L."GrssProfit",
+    CASE
+        WHEN L."LineTotal" <> 0
+        THEN ROUND(L."GrssProfit" / L."LineTotal" * 100, 2)
+        ELSE 0
+    END,
     COALESCE(I."U_GEST_Fam1", ''),
     COALESCE(I."U_GEST_Fam2", ''),
     COALESCE(I."U_GEST_Fam3", '')
 
-FROM "ORPC" O
-INNER JOIN "RPC1" L   ON O."DocEntry" = L."DocEntry"
-INNER JOIN "OCRD" C   ON O."CardCode" = C."CardCode"
-LEFT JOIN  "OITM" I   ON L."ItemCode" = I."ItemCode"
-LEFT JOIN  "ORDR" SO  ON L."BaseEntry" = SO."DocEntry"
-                      AND L."BaseType" = 17
-LEFT JOIN  "OCRD" SC  ON SO."CardCode" = SC."CardCode"
-LEFT JOIN  "@GEI_CADENA"   CAD ON SC."U_GEI_Cadena" = CAD."Code"
-LEFT JOIN  "@GEI_CENTCOMP" CEN ON SC."U_GEI_CentC"  = CEN."Code"
+FROM "ORIN" O
+INNER JOIN "RIN1"  L  ON O."DocEntry" = L."DocEntry"
+INNER JOIN "OCRD"  C  ON O."CardCode" = C."CardCode"
+LEFT JOIN  "OITM"  I  ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "OSLP"  SL ON O."SlpCode"  = SL."SlpCode"
 
 WHERE
     O."DocDate" BETWEEN
@@ -104,11 +151,16 @@ WHERE
     AND
         CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
     AND (
-        LOCATE(',' || C."CardCode" || ',', ',' || '[%Proveedor%]' || ',') > 0
-        OR '[%Proveedor%]' = ''
+        LOCATE(',' || C."CardCode" || ',', ',' || '[%Cliente%]' || ',') > 0
+        OR '[%Cliente%]' = ''
+    )
+    AND (
+        COALESCE(SL."SlpName", '') = '[%Vendedor%]'
+        OR '[%Vendedor%]' = ''
     )
 
 ORDER BY
+    "Fecha" DESC,
     "Codigo",
-    "Pedido",
+    "Num.Documento",
     "Articulo";

@@ -8,37 +8,131 @@
 --               Si se deja vacío usa la fecha actual.
 -- Tablas      : OPCH, OCRD
 -- ============================================================
+
+-- DEUDA PROVEEDORES
+-- Incluye: Facturas (OPCH) + Anticipos (ODPO) + Abonos (ORPC en negativo)
+
 SELECT
-    P."CardCode"                                   AS "Proveedor",
-    P."CardName"                                   AS "Nombre",
-    TO_VARCHAR(F."DocDueDate", 'DD/MM/YYYY')       AS "Vto",
-    F."DocNum"                                     AS "Documento",
-    CASE F."ObjType"
-        WHEN '18' THEN 'Factura Proveedor'
-        WHEN '19' THEN 'Nota Crédito Proveedor'
-        ELSE 'Documento'
-    END                                            AS "Tipo Doc.",
-    TO_VARCHAR(F."DocDate", 'DD/MM/YYYY')          AS "Fecha",
-    COALESCE(F."NumAtCard", '')                    AS "S/Factura",
-    F."DocStatus"                                  AS "Est.",
-    F."DocEntry"                                   AS "Id.",
-    COALESCE(F."PeyMethod", '')                    AS "T.P.",
-    COALESCE(P."BankCode", '')                     AS "Banco",
-    ''                                             AS "C.I.G.",
-    (F."DocTotal" - F."PaidToDate")                AS "Importe",
+    I."CardCode"                                        AS "Proveedor",
+    C."CardName"                                        AS "Nombre",
+    I."DocDueDate"                                      AS "Vto",
+    I."DocNum"                                          AS "Documento",
+    'FACTURA'                                           AS "Tipo Doc.",
     CASE
-        WHEN F."DocTotalFC" <> 0
-        THEN (F."DocTotalFC" - F."PaidFC")
+        WHEN I."DocStatus" = 'O' THEN 'PENDTE.'
+        ELSE 'CERRADA'
+    END                                                 AS "Situación",
+    I."DocDate"                                         AS "Fecha",
+    C."GroupNum"                                        AS "Tem.",
+    COALESCE(SL."SlpName", '')                          AS "Agente",
+    COALESCE(TG."PymntGroup", '')                       AS "Forma Pago",
+    C."BankCode"                                        AS "Banco",
+    0                                                   AS "Remesa",
+    ''                                                  AS "T.Rem.",
+    C."DebPayAcct"                                      AS "C.G.",
+    (I."DocTotal" - I."PaidToDate")                     AS "Importe",
+    (I."DocTotalFC" - I."PaidFC")                       AS "Importe Div.",
+    I."DocCur"                                          AS "DIV",
+    C."LicTradNum"                                      AS "NIF",
+    COALESCE(CAD."Name", '')                            AS "Cadena",
+    COALESCE(CEN."Name", '')                            AS "Central Compras",
+    CASE
+        WHEN I."DocStatus" = 'O'
+         AND I."DocDueDate" < CURRENT_DATE
+        THEN DAYS_BETWEEN(I."DocDueDate", CURRENT_DATE)
         ELSE 0
-    END                                            AS "Importe Div.",
-    F."DocCur"                                     AS "DIV"
-FROM "OPCH" F
-JOIN "OCRD" P
-  ON F."CardCode" = P."CardCode"
+    END                                                 AS "Dias Demora"
+
+FROM "OPCH" I
+JOIN  "OCRD" C    ON I."CardCode"      = C."CardCode"
+LEFT JOIN "OSLP" SL   ON I."SlpCode"  = SL."SlpCode"
+LEFT JOIN "OCTG" TG   ON I."GroupNum" = TG."GroupNum"
+LEFT JOIN "@GEI_CADENA"   CAD ON C."U_GEI_Cadena" = CAD."Code"
+LEFT JOIN "@GEI_CENTCOMP" CEN ON C."U_GEI_CentC"  = CEN."Code"
+
 WHERE
-    F."DocStatus" = 'O'
-    AND F."DocTotal" > F."PaidToDate"
-    AND F."DocDate" <= CASE WHEN '[%FechaHasta%]' = '' THEN CURRENT_DATE ELSE TO_DATE('[%FechaHasta%]', 'YYYY-MM-DD') END
+    I."DocStatus" = 'O'
+    AND I."DocTotal" > I."PaidToDate"
+
+UNION ALL
+
+-- ANTICIPOS A PROVEEDORES PENDIENTES (ODPO)
+SELECT
+    I."CardCode",
+    C."CardName",
+    I."DocDueDate",
+    I."DocNum",
+    'ANTICIPO',
+    CASE WHEN I."DocStatus" = 'O' THEN 'PENDTE.' ELSE 'CERRADA' END,
+    I."DocDate",
+    C."GroupNum",
+    COALESCE(SL."SlpName", ''),
+    COALESCE(TG."PymntGroup", ''),
+    C."BankCode",
+    0,
+    '',
+    C."DebPayAcct",
+    (I."DocTotal" - I."PaidToDate"),
+    (I."DocTotalFC" - I."PaidFC"),
+    I."DocCur",
+    C."LicTradNum",
+    COALESCE(CAD."Name", ''),
+    COALESCE(CEN."Name", ''),
+    CASE
+        WHEN I."DocStatus" = 'O'
+         AND I."DocDueDate" < CURRENT_DATE
+        THEN DAYS_BETWEEN(I."DocDueDate", CURRENT_DATE)
+        ELSE 0
+    END
+
+FROM "ODPO" I
+JOIN  "OCRD" C    ON I."CardCode"      = C."CardCode"
+LEFT JOIN "OSLP" SL   ON I."SlpCode"  = SL."SlpCode"
+LEFT JOIN "OCTG" TG   ON I."GroupNum" = TG."GroupNum"
+LEFT JOIN "@GEI_CADENA"   CAD ON C."U_GEI_Cadena" = CAD."Code"
+LEFT JOIN "@GEI_CENTCOMP" CEN ON C."U_GEI_CentC"  = CEN."Code"
+
+WHERE
+    I."DocStatus" = 'O'
+    AND I."DocTotal" > I."PaidToDate"
+
+UNION ALL
+
+-- ABONOS DE COMPRA (ORPC - en negativo)
+SELECT
+    I."CardCode",
+    C."CardName",
+    I."DocDueDate",
+    I."DocNum",
+    'ABONO',
+    CASE WHEN I."DocStatus" = 'O' THEN 'PENDTE.' ELSE 'CERRADA' END,
+    I."DocDate",
+    C."GroupNum",
+    COALESCE(SL."SlpName", ''),
+    COALESCE(TG."PymntGroup", ''),
+    C."BankCode",
+    0,
+    '',
+    C."DebPayAcct",
+    -(I."DocTotal" - I."PaidToDate"),
+    -(I."DocTotalFC" - I."PaidFC"),
+    I."DocCur",
+    C."LicTradNum",
+    COALESCE(CAD."Name", ''),
+    COALESCE(CEN."Name", ''),
+    0
+
+FROM "ORPC" I
+JOIN  "OCRD" C    ON I."CardCode"      = C."CardCode"
+LEFT JOIN "OSLP" SL   ON I."SlpCode"  = SL."SlpCode"
+LEFT JOIN "OCTG" TG   ON I."GroupNum" = TG."GroupNum"
+LEFT JOIN "@GEI_CADENA"   CAD ON C."U_GEI_Cadena" = CAD."Code"
+LEFT JOIN "@GEI_CENTCOMP" CEN ON C."U_GEI_CentC"  = CEN."Code"
+
+WHERE
+    I."DocStatus" = 'O'
+    AND I."DocTotal" > I."PaidToDate"
+
 ORDER BY
-    P."CardName",
-    F."DocDueDate";
+    "Vto",
+    "Nombre";

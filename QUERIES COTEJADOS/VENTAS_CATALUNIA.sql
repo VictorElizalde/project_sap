@@ -25,7 +25,7 @@ SELECT
     V."DocNum"                                   AS "Num. Factura",
 
     -- Código cliente
-    C."CardCode"                                  AS "Codigo Cliente",
+    C."CardCode"                                 AS "Codigo Cliente",
 
     -- Nombre cliente
     C."CardName"                                 AS "Nombre Cliente",
