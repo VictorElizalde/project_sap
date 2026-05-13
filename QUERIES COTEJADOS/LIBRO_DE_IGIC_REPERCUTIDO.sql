@@ -58,4 +58,4 @@ FROM (
     AND L."VatGroup" LIKE 'IGIC%'
     GROUP BY O."TaxDate",O."DocNum",C."LicTradNum",C."CardName",C."Country",L."VatPrcnt",O."AuthCode",O."U_GEI_Env"
 ) T
-ORDER BY "Fecha Contable", "DOCUM", "IVA TIPO"
+ORDER BY "Fecha Contable", "DOCUM", "IVA TIPO";
