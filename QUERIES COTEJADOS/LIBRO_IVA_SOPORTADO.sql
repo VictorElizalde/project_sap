@@ -1,59 +1,48 @@
--- ============================================================
+-- ===========================================================
 -- LIBRO IVA SOPORTADO
--- ------------------------------------------------------------
--- Descripción : Libro de IVA soportado (compras). Una fila
---               por factura de proveedor y tipo impositivo.
---               Incluye datos de pago desde OVPM/VPM2.
--- Parámetros  : [%FechaDesde%] Fecha inicio (YYYY-MM-DD)
---               [%FechaHasta%] Fecha fin    (YYYY-MM-DD)
--- Tablas      : OPCH, PCH1, OVTG, OCRD, VPM2, OVPM
--- ============================================================
+-- Facturas de compra por fecha contable, desglosadas por tipo IVA
+-- Incluye: IVA soportado, Intracomunitario, Importación, Exento
+-- Excluye: IGIC (categoría "O")
+-- ===========================================================
 SELECT
-    C."DocEntry"                                  AS "N.REGISTRO",
-    TO_VARCHAR(C."DocDate", 'DD/MM/YYYY')         AS "FECHA",
-    BP."LicTradNum"                               AS "NIF/DNI",
-    BP."CardName"                                 AS "NOMBRE",
-    SUM(L."LineTotal")                            AS "BASE IVA",
-    T."Rate"                                      AS "TIPO",
-    SUM(L."LineTotal" * T."Rate" / 100)           AS "CUOTA",
-    C."DocTotal"                                  AS "TOTAL DOCUM",
-    'F'                                           AS "F/A",
-    ''                                            AS "N/I",
-    ''                                            AS "N/B",
-    ''                                            AS "Tipo AUT",
-    C."NumAtCard"                                 AS "S/factura",
-    C."Comments"                                  AS "Comentarios",
-    BP."CardName"                                 AS "Factura Directa a",
-    TO_VARCHAR(P."DocDate", 'DD/MM/YYYY')         AS "Fecha Pago",
-    P."DocTotal"                                  AS "Importe Pago",
-    P."CashAcct"                                  AS "Medio Cuenta",
-    T."Code"                                      AS "Cod.Imp.",
-    T."Name"                                      AS "Descripción"
-FROM "OPCH" C
-INNER JOIN "PCH1" L  ON C."DocEntry" = L."DocEntry"
-LEFT  JOIN "OVTG" T  ON L."VatGroup" = T."Code"
-LEFT  JOIN "OCRD" BP ON C."CardCode" = BP."CardCode"
-LEFT  JOIN "VPM2" P2 ON P2."DocEntry" = C."DocEntry" AND P2."InvType" = 18
-LEFT  JOIN "OVPM" P  ON P."DocEntry" = P2."DocNum"
-WHERE
-    C."DocDate" >= TO_DATE('[%FechaDesde%]', 'YYYY-MM-DD')
-    AND C."DocDate" <= TO_DATE('[%FechaHasta%]', 'YYYY-MM-DD')
-    AND T."Rate" IS NOT NULL
+    O."TaxDate"                                  AS "Fecha Contable",
+    O."DocNum"                                   AS "Nº Documento",
+    COALESCE(O."NumAtCard", '')                  AS "Nº Factura Proveedor",
+    O."CardCode"                                 AS "Código Proveedor",
+    C."CardName"                                 AS "Proveedor",
+    COALESCE(C."LicTradNum", '')                 AS "NIF",
+    O."VatGroup"                                 AS "Código IVA",
+    O."VatName"                                  AS "Descripción IVA",
+    O."VatPrcnt"                                 AS "% IVA",
+    SUM(O."LineTotal")                           AS "Base Imponible",
+    SUM(O."VatSum")                              AS "Cuota IVA",
+    SUM(O."LineTotal") + SUM(O."VatSum")         AS "Total Factura",
+    O."Tipo Doc"
+FROM (
+    SELECT O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+           L."VatGroup", VTG."Name" AS "VatName", L."VatPrcnt",
+           L."LineTotal", L."VatSum", 'Factura' AS "Tipo Doc"
+    FROM "OPCH" O
+    INNER JOIN "PCH1" L   ON O."DocEntry" = L."DocEntry"
+    INNER JOIN "OVTG" VTG ON L."VatGroup" = VTG."Code"
+    WHERE O."TaxDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND VTG."Category" = 'I' AND L."VatGroup" NOT LIKE 'IGIC%'
+    UNION ALL
+    SELECT O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+           L."VatGroup", VTG."Name", L."VatPrcnt",
+           -L."LineTotal", -L."VatSum", 'Abono'
+    FROM "ORPC" O
+    INNER JOIN "RPC1" L   ON O."DocEntry" = L."DocEntry"
+    INNER JOIN "OVTG" VTG ON L."VatGroup" = VTG."Code"
+    WHERE O."TaxDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND VTG."Category" = 'I' AND L."VatGroup" NOT LIKE 'IGIC%'
+) O
+INNER JOIN "OCRD" C ON O."CardCode" = C."CardCode"
 GROUP BY
-    C."DocEntry",
-    C."DocDate",
-    BP."LicTradNum",
-    BP."CardName",
-    T."Rate",
-    C."DocTotal",
-    C."NumAtCard",
-    C."Comments",
-    P."DocDate",
-    P."DocTotal",
-    P."CashAcct",
-    T."Code",
-    T."Name"
-ORDER BY
-    C."DocDate",
-    C."DocEntry",
-    T."Rate";
+    O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+    C."CardName", C."LicTradNum", O."VatGroup", O."VatName", O."VatPrcnt", O."Tipo Doc"
+ORDER BY O."TaxDate", O."DocNum", O."VatPrcnt";

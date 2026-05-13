@@ -9,36 +9,56 @@
 -- Tablas      : OINV, INV1, OCRD, OVTG
 -- ============================================================
 SELECT
-    TO_VARCHAR(V."DocNum")                                           AS "N.REGISTRO",
-    TO_VARCHAR(V."DocDate", 'DD/MM/YYYY')                           AS "FECHA",
-    COALESCE(C."FederalTaxID", C."LicTradNum", '')                  AS "NIF/DNI",
-    C."CardName"                                                     AS "NOMBRE",
-    SUM(L."LineTotal")                                              AS "BASE IVA",
-    COALESCE(T."Rate", 0)                                           AS "TIPO",
-    SUM(L."LineTotal" * COALESCE(T."Rate", 0) / 100)               AS "CUOTA",
-    SUM(L."LineTotal")
-        + SUM(L."LineTotal" * COALESCE(T."Rate", 0) / 100)         AS "TOTAL DOCUM",
-    'F'                                                              AS "F/A",
-    CASE
-        WHEN C."Country" = 'ES' THEN 'E'
-        ELSE 'N'
-    END                                                              AS "N/E",
-    ''                                                               AS "Tipo AUT"
-FROM "OINV" V
-JOIN "INV1" L      ON V."DocEntry" = L."DocEntry"
-JOIN "OCRD" C      ON V."CardCode" = C."CardCode"
-LEFT JOIN "OVTG" T ON L."VatGroup" = T."Code"
-WHERE
-    V."CANCELED" = 'N'
-    AND V."DocDate" >= TO_DATE('[%FechaDesde%]', 'YYYY-MM-DD')
-    AND V."DocDate" <= TO_DATE('[%FechaHasta%]', 'YYYY-MM-DD')
-GROUP BY
-    V."DocNum",
-    V."DocDate",
-    COALESCE(C."FederalTaxID", C."LicTradNum", ''),
-    C."CardName",
-    T."Rate",
-    C."Country"
-ORDER BY
-    V."DocDate",
-    V."DocNum";
+    ROW_NUMBER() OVER (ORDER BY "Fecha Contable", "DOCUM", "IVA TIPO") AS "N.REGISTRO",
+    "Fecha Contable" AS "FECHA",
+    "NIF/DNI", "NOMBRE", "BASE", "IVA TIPO", "CUOTA", "TOTAL",
+    "DOCUM", "F/A", "N/E", "Tipo AUT", "Env/SII"
+FROM (
+    SELECT
+        O."TaxDate" AS "Fecha Contable", COALESCE(C."LicTradNum",'') AS "NIF/DNI",
+        C."CardName" AS "NOMBRE", SUM(L."LineTotal") AS "BASE", L."VatPrcnt" AS "IVA TIPO",
+        SUM(L."VatSum") AS "CUOTA", SUM(L."LineTotal")+SUM(L."VatSum") AS "TOTAL",
+        O."DocNum" AS "DOCUM", 'F' AS "F/A",
+        CASE WHEN C."Country"='ES' THEN 'N' ELSE 'E' END AS "N/E",
+        COALESCE(O."AuthCode",'') AS "Tipo AUT", COALESCE(O."U_GEI_Env",'') AS "Env/SII"
+    FROM "OINV" O
+    INNER JOIN "INV1" L ON O."DocEntry"=L."DocEntry"
+    INNER JOIN "OCRD" C ON O."CardCode"=C."CardCode"
+    INNER JOIN "OVTG" VTG ON L."VatGroup"=VTG."Code"
+    WHERE O."TaxDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND VTG."Category"='O' AND L."VatGroup" NOT LIKE 'IGIC%'
+    GROUP BY O."TaxDate",O."DocNum",C."LicTradNum",C."CardName",C."Country",L."VatPrcnt",O."AuthCode",O."U_GEI_Env"
+    UNION ALL
+    SELECT
+        O."TaxDate", COALESCE(C."LicTradNum",''), C."CardName",
+        SUM(L."LineTotal"), L."VatPrcnt", SUM(L."VatSum"), SUM(L."LineTotal")+SUM(L."VatSum"),
+        O."DocNum", 'F', CASE WHEN C."Country"='ES' THEN 'N' ELSE 'E' END,
+        COALESCE(O."AuthCode",''), COALESCE(O."U_GEI_Env",'')
+    FROM "ODPI" O
+    INNER JOIN "DPI1" L ON O."DocEntry"=L."DocEntry"
+    INNER JOIN "OCRD" C ON O."CardCode"=C."CardCode"
+    INNER JOIN "OVTG" VTG ON L."VatGroup"=VTG."Code"
+    WHERE O."TaxDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND VTG."Category"='O' AND L."VatGroup" NOT LIKE 'IGIC%'
+    GROUP BY O."TaxDate",O."DocNum",C."LicTradNum",C."CardName",C."Country",L."VatPrcnt",O."AuthCode",O."U_GEI_Env"
+    UNION ALL
+    SELECT
+        O."TaxDate", COALESCE(C."LicTradNum",''), C."CardName",
+        -SUM(L."LineTotal"), L."VatPrcnt", -SUM(L."VatSum"), -(SUM(L."LineTotal")+SUM(L."VatSum")),
+        O."DocNum", 'A', CASE WHEN C."Country"='ES' THEN 'N' ELSE 'E' END,
+        COALESCE(O."AuthCode",''), COALESCE(O."U_GEI_Env",'')
+    FROM "ORIN" O
+    INNER JOIN "RIN1" L ON O."DocEntry"=L."DocEntry"
+    INNER JOIN "OCRD" C ON O."CardCode"=C."CardCode"
+    INNER JOIN "OVTG" VTG ON L."VatGroup"=VTG."Code"
+    WHERE O."TaxDate" BETWEEN
+        CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
+    AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
+    AND VTG."Category"='O' AND L."VatGroup" NOT LIKE 'IGIC%'
+    GROUP BY O."TaxDate",O."DocNum",C."LicTradNum",C."CardName",C."Country",L."VatPrcnt",O."AuthCode",O."U_GEI_Env"
+) T
+ORDER BY "Fecha Contable", "DOCUM", "IVA TIPO";
