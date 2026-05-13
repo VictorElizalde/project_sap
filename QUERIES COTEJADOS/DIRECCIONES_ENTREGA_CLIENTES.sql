@@ -1,3 +1,13 @@
+-- ============================================================
+-- DIRECCIONES ENTREGA CLIENTES
+-- ------------------------------------------------------------
+-- Descripción : Listado de direcciones de entrega (tipo S) de
+--               todos los clientes. Muestra código, nombre,
+--               nombre de dirección, calle, CP, ciudad,
+--               provincia y país.
+-- Parámetros  : (ninguno) – devuelve todas las direcciones
+-- Tablas      : OCRD, CRD1
+-- ============================================================
 SELECT 
     T0."CardCode" AS "Código Cliente", 
     T0."CardName" AS "Nombre Cliente", 

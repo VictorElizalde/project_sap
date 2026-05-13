@@ -9,7 +9,6 @@
 -- ============================================================
 -- DEUDA CLIENTES
 -- Incluye: Facturas (OINV) + Anticipos (ODPI) + Abonos (ORIN en negativo)
-
 SELECT
     I."CardCode"                                        AS "Cliente",
     C."CardName"                                        AS "Nombre",

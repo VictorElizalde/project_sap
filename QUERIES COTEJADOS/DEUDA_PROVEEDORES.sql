@@ -10,7 +10,6 @@
 -- ============================================================
 -- DEUDA PROVEEDORES
 -- Incluye: Facturas (OPCH) + Anticipos (ODPO) + Abonos (ORPC en negativo)
-
 SELECT
     I."CardCode"                                        AS "Proveedor",
     C."CardName"                                        AS "Nombre",
