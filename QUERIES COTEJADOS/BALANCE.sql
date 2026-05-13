@@ -9,8 +9,11 @@
 -- Tablas      : JDT1, OACT
 -- ============================================================
 SELECT
+    /* Identificación contable */
     A."AcctCode"        AS "Cuenta",
     A."AcctName"        AS "Nombre Cuenta",
+
+    /* Clasificación base */
     A."GroupMask"       AS "Grupo Cuenta",
     CASE A."GroupMask"
         WHEN 1 THEN 'ACTIVO'
@@ -19,22 +22,34 @@ SELECT
         WHEN 4 THEN 'INGRESOS'
         WHEN 5 THEN 'GASTOS'
         ELSE 'OTROS'
-    END                 AS "Tipo Cuenta",
+        END                 AS "Tipo Cuenta",
+
+    /* Saldo acumulado del ejercicio */
     SUM(J."Debit")      AS "Cargos",
     SUM(J."Credit")     AS "Abonos",
     SUM(J."Debit" - J."Credit") AS "Saldo",
+
+    /* Ejercicio */
     YEAR(J."RefDate")   AS "Ejercicio"
+
 FROM "JDT1" J
-INNER JOIN "OACT" A ON J."Account" = A."AcctCode"
+    INNER JOIN "OACT" A
+ON J."Account" = A."AcctCode"
+
 WHERE
-    J."RefDate" >= TO_DATE('[%Ejercicio%]' || '-01-01', 'YYYY-MM-DD')
-    AND J."RefDate" <  ADD_YEARS(TO_DATE('[%Ejercicio%]' || '-01-01', 'YYYY-MM-DD'), 1)
-    AND A."GroupMask" IN (1, 2, 3)
+    /* Rango de fechas del ejercicio */
+    J."RefDate" >= DATE '2025-01-01'
+  AND J."RefDate" <  DATE '2026-01-01'
+
+    /* Solo cuentas de balance (excluye PyG si se desea) */
+  AND A."GroupMask" IN (1,2,3)
+
 GROUP BY
     A."AcctCode",
     A."AcctName",
     A."GroupMask",
     YEAR(J."RefDate")
+
 ORDER BY
     A."GroupMask",
     A."AcctCode";

@@ -8,7 +8,6 @@
 --               Si se deja vacío usa la fecha actual.
 -- Tablas      : OPCH, OCRD
 -- ============================================================
-
 -- DEUDA PROVEEDORES
 -- Incluye: Facturas (OPCH) + Anticipos (ODPO) + Abonos (ORPC en negativo)
 

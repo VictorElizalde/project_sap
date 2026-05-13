@@ -9,7 +9,6 @@
 -- Tablas      : OINV, INV1, OCRD, OCRG, OITM, OITB, OMRC,
 --               OSLP, OSHP
 -- ============================================================
-
 -- Pedidos de compra + Abonos de compra (en negativo)
 SELECT
     -- TIPO DE DOCUMENTO
@@ -34,7 +33,8 @@ SELECT
     L."Price"                                           AS "Precio",
     L."LineTotal"                                       AS "Importe",
 
-    -- MARGEN Y % MARGEN
+    -- COSTE, MARGEN Y % MARGEN
+    L."LineTotal" - L."GrssProfit"                      AS "Coste",
     L."GrssProfit"                                      AS "Margen",
     CASE
         WHEN L."LineTotal" <> 0
@@ -83,6 +83,7 @@ SELECT
     L."Quantity",
     L."Price",
     L."LineTotal",
+    L."LineTotal" - L."GrssProfit",
     L."GrssProfit",
     CASE
         WHEN L."LineTotal" <> 0
@@ -129,6 +130,7 @@ SELECT
     -L."Quantity",
     L."Price",
     -L."LineTotal",
+    -(L."LineTotal" - L."GrssProfit"),
     -L."GrssProfit",
     CASE
         WHEN L."LineTotal" <> 0

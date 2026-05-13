@@ -22,17 +22,62 @@ SELECT
             THEN '13. Gastos financieros'
         ELSE 'OTROS'
     END AS "Concepto",
-    SUM(CASE WHEN YEAR(T."RefDate") = TO_INTEGER('[%Ejercicio%]')     THEN (J."Debit" - J."Credit") ELSE 0 END) AS "Año N",
-    SUM(CASE WHEN YEAR(T."RefDate") = TO_INTEGER('[%Ejercicio%]') - 1 THEN (J."Debit" - J."Credit") ELSE 0 END) AS "Año N-1",
-    SUM(CASE WHEN YEAR(T."RefDate") = TO_INTEGER('[%Ejercicio%]') - 2 THEN (J."Debit" - J."Credit") ELSE 0 END) AS "Año N-2",
-    SUM(CASE WHEN YEAR(T."RefDate") = TO_INTEGER('[%Ejercicio%]') - 3 THEN (J."Debit" - J."Credit") ELSE 0 END) AS "Año N-3",
-    SUM(CASE WHEN YEAR(T."RefDate") = TO_INTEGER('[%Ejercicio%]') - 4 THEN (J."Debit" - J."Credit") ELSE 0 END) AS "Año N-4"
+
+    /* ===================== 2025 ===================== */
+    SUM(
+        CASE
+            WHEN YEAR(T."RefDate") = 2025
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2025",
+
+    /* ===================== 2024 ===================== */
+    SUM(
+        CASE
+            WHEN YEAR(T."RefDate") = 2024
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2024",
+
+    /* ===================== 2023 ===================== */
+    SUM(
+        CASE
+            WHEN YEAR(T."RefDate") = 2023
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2023",
+
+    /* ===================== 2022 ===================== */
+    SUM(
+        CASE
+            WHEN YEAR(T."RefDate") = 2022
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2022",
+
+    /* ===================== 2021 ===================== */
+    SUM(
+        CASE
+            WHEN YEAR(T."RefDate") = 2021
+            THEN (J."Debit" - J."Credit")
+            ELSE 0
+        END
+    ) AS "2021"
+
 FROM "OJDT" T
-JOIN "JDT1" J ON T."TransId" = J."TransId"
-JOIN "OACT" A ON J."Account" = A."AcctCode"
+JOIN "JDT1" J
+  ON T."TransId" = J."TransId"
+JOIN "OACT" A
+  ON J."Account" = A."AcctCode"
+
 WHERE
-    YEAR(T."RefDate") BETWEEN TO_INTEGER('[%Ejercicio%]') - 4 AND TO_INTEGER('[%Ejercicio%]')
-    AND A."GroupMask" IN (4, 5)
+    YEAR(T."RefDate") BETWEEN 2021 AND 2025
+AND A."GroupMask" = 4        -- 🔑 SOLO CUENTAS DE PÉRDIDAS Y GANANCIAS
+
 GROUP BY
     CASE
         WHEN A."AcctCode" BETWEEN '70000000' AND '79999999'
@@ -47,5 +92,6 @@ GROUP BY
             THEN '13. Gastos financieros'
         ELSE 'OTROS'
     END
+
 ORDER BY
     "Concepto";

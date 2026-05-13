@@ -9,7 +9,6 @@
 --               [%Usuario%]    Código de usuario   (opcional)
 -- Tablas      : OCLG, OCRD, OCPR, OCLGS, OUSR
 -- ============================================================
-
 SELECT
     -- USUARIO
     COALESCE(U."U_NAME", '')                     AS "USUARIO",
@@ -35,6 +34,9 @@ SELECT
 
     -- ASUNTO
     COALESCE(SBJ."Name", '')                     AS "ASUNTO",
+
+    -- OPORTUNIDAD ASOCIADA
+    CLG."OprId"                                  AS "Nº OPORTUNIDAD",
 
     -- NOTAS Y CONTENIDO
     COALESCE(CLG."Notes", '')                    AS "COMENTARIOS",

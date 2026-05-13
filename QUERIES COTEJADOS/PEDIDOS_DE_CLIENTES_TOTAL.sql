@@ -25,6 +25,7 @@ SELECT
     O."DocDueDate"                               AS "F.Entrega",
     L."WhsCode"                                  AS "Depósito",
     O."PickRmrk"                                 AS "Observaciones Externas",
+    COALESCE(A."Street" || ', ' || A."City", O."ShipToCode", '') AS "Dir.Entrega",
 
     -- ARTÍCULO
     L."ItemCode"                                 AS "Articulo",
@@ -49,6 +50,9 @@ INNER JOIN "RDR1" L  ON O."DocEntry" = L."DocEntry"
 INNER JOIN "OCRD" C  ON O."CardCode" = C."CardCode"
 LEFT JOIN  "OSLP" S  ON O."SlpCode"  = S."SlpCode"
 LEFT JOIN  "OITM" I  ON L."ItemCode" = I."ItemCode"
+LEFT JOIN  "CRD1" A  ON A."CardCode" = O."CardCode"
+                    AND A."Address"   = O."ShipToCode"
+                    AND A."AdresType" = 'S'
 
 WHERE
     O."DocDate" BETWEEN

@@ -24,6 +24,8 @@ SELECT
     O."DocDueDate"                               AS "F.Entrega",
     L."WhsCode"                                  AS "Depósito",
     O."PickRmrk"                                 AS "Observaciones Externas",
+    COALESCE(W."OnHand", 0)                      AS "Stock",
+    COALESCE(O."ShipToCode", '')                 AS "Dir.Entrega",
 
     -- ARTÍCULO
     L."ItemCode"                                 AS "Articulo",
@@ -48,12 +50,12 @@ INNER JOIN "RDR1" L  ON O."DocEntry" = L."DocEntry"
 INNER JOIN "OCRD" C  ON O."CardCode" = C."CardCode"
 LEFT JOIN  "OSLP" S  ON O."SlpCode"  = S."SlpCode"
 LEFT JOIN  "OITM" I  ON L."ItemCode" = I."ItemCode"
-LEFT JOIN  "CRD1" B  ON C."CardCode" = B."CardCode"
-                     AND B."AdresType" = 'B'
-                     AND B."Address"  = O."PayToCode"
+LEFT JOIN  "OITW" W  ON W."ItemCode" = L."ItemCode"
+                    AND W."WhsCode"  = L."WhsCode"
 
 WHERE
     O."DocStatus" = 'O'
+    AND L."OpenQty" > 0
     AND (
         LOCATE(',' || C."CardCode" || ',', ',' || '[%0]' || ',') > 0
         OR '[%0]' = ''
