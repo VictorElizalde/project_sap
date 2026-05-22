@@ -1,0 +1,410 @@
+// ============================================================
+// MEDIDAS DAX — SAP Business One → Power BI
+// Todos los workbooks: Stock · Hospitality · Rentabilidad
+// ============================================================
+// Instrucciones:
+//   1. En Power BI Desktop → Modeling → New Table
+//   2. Nombre de la tabla: _Medidas
+//   3. Fórmula: _Medidas = ROW("x", BLANK())
+//   4. Para cada medida: clic derecho en _Medidas → New Measure
+//      y pega el código de abajo
+// ============================================================
+
+
+// ════════════════════════════════════════════════════════════
+// WORKBOOK 1: STOCK
+// Fuentes: RAWstock · RAWalbaranes · RAW_PedidosPendientes · RAWfamilias
+// ════════════════════════════════════════════════════════════
+
+// ── DimFecha (tabla calculada — NO es medida, crear como New Table) ──────────
+DimFecha =
+ADDCOLUMNS(
+    CALENDAR(DATE(2024,1,1), TODAY()),
+    "Año",         YEAR([Date]),
+    "Mes",         FORMAT([Date], "MMMM", "es-ES"),
+    "NumMes",      MONTH([Date]),
+    "Semana",      WEEKNUM([Date], 2),
+    "DiaSemana",   FORMAT([Date], "dddd", "es-ES"),
+    "EsLunes",     WEEKDAY([Date], 2) = 1
+)
+
+
+// ── 1.1 Valor de stock ───────────────────────────────────────────────────────
+
+Valor Stock Total =
+    SUMX(RAWstock, RAWstock[Valor stock])
+
+Valor Stock Consumo =
+    CALCULATE([Valor Stock Total], RAWfamilias[Canal] = "CONSUMO")
+
+Valor Stock Hotel =
+    CALCULATE([Valor Stock Total], RAWfamilias[Canal] = "HOTEL")
+
+Valor Stock Profesional =
+    CALCULATE([Valor Stock Total], RAWfamilias[Canal] = "PROFESIONAL")
+
+Valor Stock Promocional =
+    CALCULATE([Valor Stock Total], RAWfamilias[Canal] = "PROMOCIONAL")
+
+
+// ── 1.2 Comparativa semana anterior ─────────────────────────────────────────
+
+Valor Stock Semana Anterior =
+    VAR SemanaActual = MAX(RAWstock[Semana])
+    RETURN
+    CALCULATE(
+        [Valor Stock Total],
+        RAWstock[Semana] = SemanaActual - 1
+    )
+
+Diferencia Semana Anterior =
+    [Valor Stock Total] - [Valor Stock Semana Anterior]
+
+% Diferencia Semana =
+    DIVIDE([Diferencia Semana Anterior], [Valor Stock Semana Anterior], 0)
+
+
+// ── 1.3 Antigüedad de stock ──────────────────────────────────────────────────
+
+Existencia Total =
+    SUM(RAWstock[Existencia])
+
+Existencia Menos 30 =
+    SUM(RAWstock[Existencia <30])
+
+Existencia 30 a 60 =
+    SUM(RAWstock[Existencia <60])
+
+Existencia 60 a 90 =
+    SUM(RAWstock[Existencia <90])
+
+Existencia Mas 90 =
+    SUM(RAWstock[Existencia >90])
+
+% Stock Antiguo =
+    DIVIDE([Existencia Mas 90], [Existencia Total], 0)
+
+Valor Stock Mas 90 Dias =
+    SUMX(
+        FILTER(RAWstock, RAWstock[Existencia >90] > 0),
+        RAWstock[Existencia >90] * RAWstock[Precio Medio]
+    )
+
+Items Sin Movimiento =
+    COUNTROWS(
+        FILTER(RAWstock, RAWstock[Rotación] = 0 && RAWstock[Existencia] > 0)
+    )
+
+Dias Rotacion Promedio =
+    AVERAGEX(
+        FILTER(RAWstock, RAWstock[Dias R.] < 999 && RAWstock[Existencia] > 0),
+        RAWstock[Dias R.]
+    )
+
+
+// ── 1.4 Albaranes y agentes ──────────────────────────────────────────────────
+
+Total Importe Albaranes =
+    SUM(RAWalbaranes[Importe])
+
+Total Unidades Entregadas =
+    SUM(RAWalbaranes[Cantidad])
+
+Ticket Medio Albaran =
+    DIVIDE([Total Importe Albaranes], DISTINCTCOUNT(RAWalbaranes[Núm.Albarán]), 0)
+
+Coste Total Albaranes =
+    SUM(RAWalbaranes[Imp.Coste])
+
+Margen Bruto Albaranes =
+    [Total Importe Albaranes] - [Coste Total Albaranes]
+
+% Margen Albaranes =
+    DIVIDE([Margen Bruto Albaranes], [Total Importe Albaranes], 0)
+
+Num Clientes Distintos =
+    DISTINCTCOUNT(RAWalbaranes[Cliente])
+
+
+// ── 1.5 Pedidos pendientes ───────────────────────────────────────────────────
+
+Total Pedidos Pendientes =
+    SUM(RAW_PedidosPendientes[Importe])
+
+Total Uds Pendientes =
+    SUM(RAW_PedidosPendientes[Cantidad])
+
+Num Pedidos Abiertos =
+    DISTINCTCOUNT(RAW_PedidosPendientes[Pedido])
+
+Ratio Pedidos vs Ventas =
+    DIVIDE(
+        [Total Pedidos Pendientes],
+        CALCULATE(
+            [Total Importe Albaranes],
+            YEAR(RAWalbaranes[Fecha]) = YEAR(TODAY())
+        ),
+        0
+    )
+
+
+// ════════════════════════════════════════════════════════════
+// WORKBOOK 2: HOSPITALITY
+// Fuentes: RAWventas_hospitality · RAWalbaranes · RAWclientes · RAWfamilias
+// ════════════════════════════════════════════════════════════
+
+// ── 2.1 Ventas ───────────────────────────────────────────────────────────────
+
+Total Venta Hospitality =
+    SUM(RAWventas_hospitality[Importe Venta])
+
+Total Coste Hospitality =
+    SUM(RAWventas_hospitality[Importe Coste])
+
+Margen Bruto Hospitality =
+    [Total Venta Hospitality] - [Total Coste Hospitality]
+
+% Margen Hospitality =
+    DIVIDE([Margen Bruto Hospitality], [Total Venta Hospitality], 0)
+
+Uds Vendidas Hospitality =
+    SUM(RAWventas_hospitality[Cantidad])
+
+Num Facturas Hospitality =
+    DISTINCTCOUNT(RAWventas_hospitality[Factura])
+
+Ticket Medio Hospitality =
+    DIVIDE([Total Venta Hospitality], [Num Facturas Hospitality], 0)
+
+
+// ── 2.2 Objetivos vs resultados ──────────────────────────────────────────────
+// NOTA: Requiere la lista de SharePoint Objetivos_PowerBI conectada como
+//       tabla adicional en el modelo con columnas: Canal, Mes, ObjetivoMensual
+
+Objetivo Mensual =
+    CALCULATE(
+        SUM(Objetivos_PowerBI[ObjetivoMensual]),
+        TREATAS(
+            VALUES(DimFecha[NumMes]),
+            Objetivos_PowerBI[Mes]
+        )
+    )
+
+% Cumplimiento Objetivo =
+    DIVIDE([Total Venta Hospitality], [Objetivo Mensual], 0)
+
+Desviacion vs Objetivo =
+    [Total Venta Hospitality] - [Objetivo Mensual]
+
+
+// ── 2.3 Abonos y devoluciones ────────────────────────────────────────────────
+
+Total Abonos =
+    CALCULATE(
+        SUM(RAWventas_hospitality[Importe Venta]),
+        RAWventas_hospitality[Mot.Abono] <> ""
+    )
+
+% Abonos sobre Venta =
+    DIVIDE(ABS([Total Abonos]), [Total Venta Hospitality], 0)
+
+Num Abonos =
+    CALCULATE(
+        DISTINCTCOUNT(RAWventas_hospitality[Factura]),
+        RAWventas_hospitality[Mot.Abono] <> ""
+    )
+
+
+// ── 2.4 Clientes ─────────────────────────────────────────────────────────────
+
+Total Clientes Activos =
+    DISTINCTCOUNT(RAWventas_hospitality[Cliente])
+
+Clientes Nuevos 2026 =
+    CALCULATE(
+        DISTINCTCOUNT(RAWclientes[CODIGO]),
+        RAWclientes[ES_NUEVO_2026] = "NUEVO"
+    )
+
+% Clientes Nuevos =
+    DIVIDE([Clientes Nuevos 2026], [Total Clientes Activos], 0)
+
+Venta Clientes Nuevos =
+    CALCULATE(
+        [Total Venta Hospitality],
+        RELATED(RAWclientes[ES_NUEVO_2026]) = "NUEVO"
+    )
+
+Venta Media por Cliente =
+    DIVIDE([Total Venta Hospitality], [Total Clientes Activos], 0)
+
+
+// ── 2.5 Familia mix ──────────────────────────────────────────────────────────
+
+% Mix Familia =
+    DIVIDE(
+        [Total Venta Hospitality],
+        CALCULATE([Total Venta Hospitality], ALL(RAWfamilias[Familia])),
+        0
+    )
+
+Venta YTD Hospitality =
+    CALCULATE(
+        [Total Venta Hospitality],
+        DATESYTD(DimFecha[Date])
+    )
+
+Venta Mes Anterior =
+    CALCULATE(
+        [Total Venta Hospitality],
+        DATEADD(DimFecha[Date], -1, MONTH)
+    )
+
+% Crecimiento vs Mes Anterior =
+    DIVIDE(
+        [Total Venta Hospitality] - [Venta Mes Anterior],
+        [Venta Mes Anterior],
+        0
+    )
+
+
+// ════════════════════════════════════════════════════════════
+// WORKBOOK 3: RENTABILIDAD POR FAMILIA
+// Fuentes: RAWventas_all · RAWinventario · RAWalbaranes · RAWfamilias
+// ════════════════════════════════════════════════════════════
+
+// ── 3.1 Ventas globales ──────────────────────────────────────────────────────
+
+Total Venta Global =
+    SUM(RAWventas_all[Importe Venta])
+
+Total Coste Global =
+    SUM(RAWventas_all[Importe Coste])
+
+Margen Bruto Global =
+    [Total Venta Global] - [Total Coste Global]
+
+% Margen Global =
+    DIVIDE([Margen Bruto Global], [Total Venta Global], 0)
+
+
+// ── 3.2 Rotación de inventario ───────────────────────────────────────────────
+
+Stock Medio =
+    AVERAGEX(
+        VALUES(RAWinventario[MES]),
+        CALCULATE(SUM(RAWinventario[IMPORTE]))
+    )
+
+Coste de Ventas Anual =
+    CALCULATE(
+        SUM(RAWventas_all[Importe Coste]),
+        YEAR(RAWventas_all[Fecha]) = YEAR(TODAY())
+    )
+
+Rotacion Inventario =
+    DIVIDE([Coste de Ventas Anual], [Stock Medio], 0)
+
+Dias de Stock =
+    DIVIDE(365, [Rotacion Inventario], 0)
+
+
+// ── 3.3 Coste de almacenamiento ──────────────────────────────────────────────
+// NOTA: Ajustar el % de coste de almacenamiento según datos reales de la empresa
+
+% Coste Almacenamiento =
+    0.15   // 15% anual sobre stock medio — ajustar según empresa
+
+Coste Almacenamiento =
+    [Stock Medio] * [% Coste Almacenamiento]
+
+Margen Despues Almacenamiento =
+    [Margen Bruto Global] - [Coste Almacenamiento]
+
+% Margen Despues Almacenamiento =
+    DIVIDE([Margen Despues Almacenamiento], [Total Venta Global], 0)
+
+
+// ── 3.4 Rentabilidad por familia ─────────────────────────────────────────────
+
+Venta por Familia =
+    CALCULATE([Total Venta Global], VALUES(RAWfamilias[Familia]))
+
+Margen por Familia =
+    CALCULATE([Margen Bruto Global], VALUES(RAWfamilias[Familia]))
+
+% Margen por Familia =
+    DIVIDE([Margen por Familia], [Venta por Familia], 0)
+
+Ranking Familia por Margen =
+    RANKX(
+        ALL(RAWfamilias[Familia]),
+        [Margen por Familia],
+        ,
+        DESC,
+        DENSE
+    )
+
+
+// ── 3.5 Comparativa mensual ──────────────────────────────────────────────────
+
+Venta Mes Actual =
+    CALCULATE(
+        [Total Venta Global],
+        MONTH(RAWventas_all[Fecha]) = MONTH(TODAY()),
+        YEAR(RAWventas_all[Fecha]) = YEAR(TODAY())
+    )
+
+Venta Mismo Mes Año Anterior =
+    CALCULATE(
+        [Total Venta Global],
+        SAMEPERIODLASTYEAR(DimFecha[Date])
+    )
+
+% Crecimiento Interanual =
+    DIVIDE(
+        [Total Venta Global] - [Venta Mismo Mes Año Anterior],
+        [Venta Mismo Mes Año Anterior],
+        0
+    )
+
+Venta YTD Global =
+    CALCULATE(
+        [Total Venta Global],
+        DATESYTD(DimFecha[Date])
+    )
+
+Venta YTD Año Anterior =
+    CALCULATE(
+        [Venta YTD Global],
+        SAMEPERIODLASTYEAR(DimFecha[Date])
+    )
+
+% Crecimiento YTD =
+    DIVIDE(
+        [Venta YTD Global] - [Venta YTD Año Anterior],
+        [Venta YTD Año Anterior],
+        0
+    )
+
+
+// ── 3.6 Stock por familia (desde RAWinventario) ──────────────────────────────
+
+Stock Actual Valor =
+    SUM(RAWinventario[IMPORTE])
+
+Stock Actual Uds =
+    SUM(RAWinventario[CANTIDAD])
+
+Stock Reservado =
+    SUM(RAWinventario[RESERVADO])
+
+Stock Disponible =
+    SUM(RAWinventario[DISPON.FUTURO])
+
+Cobertura Dias =
+    DIVIDE(
+        [Stock Actual Uds],
+        DIVIDE([Total Venta Global], 365, 0),
+        0
+    )
