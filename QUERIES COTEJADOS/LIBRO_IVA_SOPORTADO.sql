@@ -6,9 +6,10 @@
 -- ===========================================================
 SELECT
     O."TaxDate"                                  AS "Fecha Contable",
+    O."DocEntry"                                 AS "DocEntry",          -- Navegación → abre el documento
     O."DocNum"                                   AS "Nº Documento",
     COALESCE(O."NumAtCard", '')                  AS "Nº Factura Proveedor",
-    O."CardCode"                                 AS "Código Proveedor",
+    O."CardCode"                                 AS "Código Proveedor",  -- Navegación → abre ficha proveedor
     C."CardName"                                 AS "Proveedor",
     COALESCE(C."LicTradNum", '')                 AS "NIF",
     O."VatGroup"                                 AS "Código IVA",
@@ -19,7 +20,8 @@ SELECT
     SUM(O."LineTotal") + SUM(O."VatSum")         AS "Total Factura",
     O."Tipo Doc"
 FROM (
-    SELECT O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+    -- Facturas de proveedor (OPCH)
+    SELECT O."DocEntry", O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
            L."VatGroup", VTG."Name" AS "VatName", L."VatPrcnt",
            L."LineTotal", L."VatSum", 'Factura' AS "Tipo Doc"
     FROM "OPCH" O
@@ -29,8 +31,11 @@ FROM (
         CASE WHEN '[%FechaDesde%]' = '' THEN '1900-01-01' ELSE '[%FechaDesde%]' END
     AND CASE WHEN '[%FechaHasta%]' = '' THEN '9999-12-31' ELSE '[%FechaHasta%]' END
     AND VTG."Category" = 'I' AND L."VatGroup" NOT LIKE 'IGIC%'
+
     UNION ALL
-    SELECT O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+
+    -- Abonos de proveedor (ORPC) — importes en negativo
+    SELECT O."DocEntry", O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
            L."VatGroup", VTG."Name", L."VatPrcnt",
            -L."LineTotal", -L."VatSum", 'Abono'
     FROM "ORPC" O
@@ -43,6 +48,6 @@ FROM (
 ) O
 INNER JOIN "OCRD" C ON O."CardCode" = C."CardCode"
 GROUP BY
-    O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
+    O."DocEntry", O."TaxDate", O."DocNum", O."NumAtCard", O."CardCode",
     C."CardName", C."LicTradNum", O."VatGroup", O."VatName", O."VatPrcnt", O."Tipo Doc"
 ORDER BY O."TaxDate", O."DocNum", O."VatPrcnt";
