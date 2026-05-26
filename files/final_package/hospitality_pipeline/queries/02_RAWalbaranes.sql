@@ -29,7 +29,7 @@ SELECT
     'V'                                                             AS "Tipo",
 
     -- Linked sales order
-    COALESCE(ORD."DocNum", '')                                     AS "Código Pedido",
+    COALESCE(TO_NVARCHAR(ORD."DocNum"), '')                        AS "Código Pedido",
     ORD."DocDate"                                                   AS "Fecha Pedido",
     COALESCE(DLN."NumAtCard", '')                                  AS "Referencia Pedido",
 
@@ -59,7 +59,7 @@ SELECT
     COALESCE(TRP."TrnspName", '')                                  AS "Enviado por",
 
     -- Print / export / confirm status
-    CASE DLN."PrintStatus" WHEN 'Y' THEN 'Impreso' ELSE 'Pt.Imp.' END AS "Sit.Impr.",
+    CASE DLN."Printed" WHEN 'Y' THEN 'Impreso' ELSE 'Pt.Imp.' END AS "Sit.Impr.",
     ''                                                              AS "Sit.Exp.",
     ''                                                              AS "Sit.Conf.",
 
@@ -67,7 +67,7 @@ SELECT
     DN1."WhsCode"                                                   AS "Depósito",
 
     -- Payment & delivery terms
-    COALESCE(DLN."GroupNum", '')                                   AS "F.Pago",
+    COALESCE(TO_NVARCHAR(DLN."GroupNum"), '')                      AS "F.Pago",
     DLN."DocDueDate"                                               AS "F.Entrega",
     DLN."TaxDate"                                                   AS "F.Valor",
 
@@ -91,14 +91,8 @@ SELECT
     DN1."StockPrice"                                               AS "P.Coste",
     DN1."StockPrice" * DN1."Quantity"                              AS "Imp.Coste",
 
-    -- Supplier (main supplier of article)
-    COALESCE((
-        SELECT TOP 1 SUP."CardName"
-        FROM   ITM1 SC
-        JOIN   OCRD SUP ON SUP."CardCode" = SC."SupplierCode"
-        WHERE  SC."ItemCode" = DN1."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "Proveedor",
+    -- Supplier (preferred supplier from OITM.CardCode)
+    COALESCE(SUPP."CardName", '')                                  AS "Proveedor",
 
     -- Product family
     COALESCE(ITB."ItmsGrpNam", '')                                 AS "Familia"
@@ -112,11 +106,12 @@ LEFT JOIN   ORDR  ORD   ON ORD."DocEntry"    = DLN."BaseEntry"
 LEFT JOIN   CRD1  ADR   ON ADR."CardCode"    = CRD."CardCode"
                         AND ADR."AdresType"  = 'S'
                         AND ADR."Address"    = DLN."ShipToCode"
-LEFT JOIN   OCNT  CNT   ON CNT."Code"        = ADR."Country"
-LEFT JOIN   OTRN  TRP   ON TRP."TrnspCode"   = DLN."TrnspCode"
+LEFT JOIN   OCRY  CNT   ON CNT."Code"        = ADR."Country"
+LEFT JOIN   OSHP  TRP   ON TRP."TrnspCode"   = DLN."TrnspCode"
 LEFT JOIN   OITM  ITM   ON ITM."ItemCode"    = DN1."ItemCode"
 LEFT JOIN   OITB  ITB   ON ITB."ItmsGrpCod"  = ITM."ItmsGrpCod"
 LEFT JOIN   OCRG  CG    ON CG."GroupCode"    = CRD."GroupCode"
+LEFT JOIN   OCRD  SUPP  ON SUPP."CardCode"   = ITM."CardCode"
 
 WHERE
     DLN."CANCELED" = 'N'                          -- exclude cancelled

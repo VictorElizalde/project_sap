@@ -65,7 +65,7 @@ SELECT
 
     -- Additional contact
     COALESCE(CRD."Phone2", '')                                     AS "TELEFONO-2",
-    COALESCE(CRD."E_MailL", '')                                    AS "EMAIL-FACTURAS",
+    ''                                                              AS "EMAIL-FACTURAS",    -- E_MailL no existe en OCRD
     COALESCE(CRD."CntctPrsn", '')                                  AS "PERSONA-CONTACTO",
     COALESCE(CRD."LicTradNum", '')                                 AS "CIF"
 

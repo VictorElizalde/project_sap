@@ -35,14 +35,14 @@ SELECT
     -- Client
     CRD."CardCode"                                                  AS "Cliente",
     CRD."CardName"                                                  AS "Nombre Cliente",
-    COALESCE(CRD."U_ClAgrup", 0)                                   AS "Cl.Agrup",
+    0                                                               AS "Cl.Agrup",       -- U_ClAgrup no existe en OCRD
     COALESCE(CRG."GroupName", '')                                   AS "Ramo",
-    COALESCE(CRD."U_Actividad", '')                                AS "Actividad",
+    ''                                                              AS "Actividad",       -- U_Actividad no existe en OCRD
 
     -- Product
-    COALESCE(ITM."U_Marca", '')                                    AS "Marca",
+    COALESCE(MRC."FirmName", '')                                   AS "Marca",
     COALESCE(ITB."ItmsGrpNam", '')                                 AS "Familia",
-    COALESCE(ITM."U_Subfamilia", '')                               AS "Subfamilia",
+    COALESCE(ITM."U_GEST_Fam2", '')                                AS "Subfamilia",
     LN1."WhsCode"                                                   AS "Depósito",
     LN1."ItemCode"                                                  AS "Articulo",
     LN1."Dscription"                                               AS "Descripción",
@@ -71,25 +71,13 @@ SELECT
     -- Logistics
     COALESCE(TRP."TrnspName", '')                                  AS "Forma de envio",
 
-    -- Credit note reason (populated only on returns/abonos)
-    COALESCE(INV."U_MotAbono", '')                                 AS "Mot.Abono",
-    COALESCE(INV."U_DescAbono", '')                                AS "Desc. Abono",
+    -- Credit note reason (UDFs U_MotAbono / U_DescAbono no existen en OINV)
+    ''                                                              AS "Mot.Abono",
+    ''                                                              AS "Desc. Abono",
 
-    -- Supplier
-    COALESCE((
-        SELECT TOP 1 SUP."CardName"
-        FROM   ITM1 SC
-        JOIN   OCRD SUP ON SUP."CardCode" = SC."SupplierCode"
-        WHERE  SC."ItemCode" = LN1."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "Proveedor",
-
-    COALESCE((
-        SELECT TOP 1 SC."SuppCatNum"
-        FROM   ITM1 SC
-        WHERE  SC."ItemCode" = LN1."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "Ref.Proveedor",
+    -- Supplier (preferred supplier from OITM.CardCode → OCRD)
+    COALESCE(SUPP."CardName", '')                                  AS "Proveedor",
+    COALESCE(ITM."SuppCatNum", '')                                 AS "Ref.Proveedor",
 
     -- Canal classification (primary — matches Hospitality file)
     CASE ITB."ItmsGrpNam"
@@ -137,7 +125,9 @@ JOIN        OSLP  SLP   ON SLP."SlpCode"     = INV."SlpCode"
 LEFT JOIN   OCRG  CRG   ON CRG."GroupCode"   = CRD."GroupCode"
 LEFT JOIN   OITM  ITM   ON ITM."ItemCode"    = LN1."ItemCode"
 LEFT JOIN   OITB  ITB   ON ITB."ItmsGrpCod"  = ITM."ItmsGrpCod"
-LEFT JOIN   OTRN  TRP   ON TRP."TrnspCode"   = INV."TrnspCode"
+LEFT JOIN   OSHP  TRP   ON TRP."TrnspCode"   = INV."TrnspCode"
+LEFT JOIN   OMRC  MRC   ON MRC."FirmCode"    = ITM."FirmCode"
+LEFT JOIN   OCRD  SUPP  ON SUPP."CardCode"   = ITM."CardCode"
 
 WHERE
     INV."CANCELED" = 'N'                          -- not cancelled
@@ -156,7 +146,7 @@ ORDER BY
 
 -- ============================================================
 -- USAGE NOTES FOR CLINE:
--- 
+--
 -- In the Hospitality pipeline (pipeline_hospitality.py):
 --   Uncomment the AND ITB."ItmsGrpNam" IN (...) filter
 --   to restrict to Hospitality + Monitor families only.

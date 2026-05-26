@@ -32,15 +32,15 @@ SELECT
     LAST_DAY(CURRENT_DATE)                                          AS "FECHA",
     LOWER(MONTHNAME(CURRENT_DATE))                                  AS "MES",
 
-    -- Brand
-    COALESCE(ITM."U_MarcaCod", '')                                 AS "MARCA",
-    COALESCE(ITM."U_Marca", '')                                    AS "NOMBRE MARCA",
+    -- Brand (FirmCode = numeric code, FirmName = brand name from OMRC)
+    COALESCE(TO_NVARCHAR(ITM."FirmCode"), '')                      AS "MARCA",
+    COALESCE(MRC."FirmName", '')                                   AS "NOMBRE MARCA",
 
     -- Family hierarchy
     ITB."ItmsGrpCod"                                               AS "FAMILIA",
     ITB."ItmsGrpNam"                                               AS "NOMBRE FAMILIA",
-    COALESCE(ITM."U_SubfamCod", '')                                AS "SUBFAM",
-    COALESCE(ITM."U_Subfamilia", '')                               AS "NOMBRE SUBFAMILIA",
+    ''                                                              AS "SUBFAM",            -- U_SubfamCod no existe en OITM
+    COALESCE(ITM."U_GEST_Fam2", '')                                AS "NOMBRE SUBFAMILIA",
 
     -- Article
     ITM."ItemCode"                                                  AS "ARTICULO",
@@ -112,28 +112,10 @@ SELECT
         AND    DL."DocDate"   >= ADD_MONTHS(CURRENT_DATE, -1)
     ), 0)                                                           AS "ALBS.CONF.",
 
-    -- Supplier info
-    COALESCE((
-        SELECT TOP 1 SC."SupplierCode"
-        FROM   ITM1 SC
-        WHERE  SC."ItemCode" = ITM."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "PROV.",
-
-    COALESCE((
-        SELECT TOP 1 SUP."CardName"
-        FROM   ITM1 SC
-        JOIN   OCRD SUP ON SUP."CardCode" = SC."SupplierCode"
-        WHERE  SC."ItemCode" = ITM."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "NOMBRE",
-
-    COALESCE((
-        SELECT TOP 1 SC."SuppCatNum"
-        FROM   ITM1 SC
-        WHERE  SC."ItemCode" = ITM."ItemCode"
-        ORDER BY SC."LineNum"
-    ), '')                                                          AS "REF.PROVEEDOR",
+    -- Supplier info (from OITM.CardCode → OCRD preferred supplier)
+    COALESCE(ITM."CardCode", '')                                   AS "PROV.",
+    COALESCE(SUPP."CardName", '')                                  AS "NOMBRE",
+    COALESCE(ITM."SuppCatNum", '')                                 AS "REF.PROVEEDOR",
 
     -- FAMILIA7 — simplified family grouping for rotation analysis
     CASE ITB."ItmsGrpNam"
@@ -150,6 +132,8 @@ FROM       OITM  ITM
 JOIN       OITB  ITB  ON ITB."ItmsGrpCod" = ITM."ItmsGrpCod"
 LEFT JOIN  OITW  WH   ON WH."ItemCode"    = ITM."ItemCode"
                       AND WH."WhsCode" NOT IN ('98','99')   -- exclude virtual warehouses
+LEFT JOIN  OMRC  MRC  ON MRC."FirmCode"   = ITM."FirmCode"
+LEFT JOIN  OCRD  SUPP ON SUPP."CardCode"  = ITM."CardCode"
 
 WHERE
     ITM."validFor"   = 'Y'                        -- active items only
@@ -159,6 +143,6 @@ WHERE
 
 ORDER BY
     ITB."ItmsGrpNam",
-    ITM."U_Marca",
+    MRC."FirmName",
     ITM."ItemCode"
 ;
